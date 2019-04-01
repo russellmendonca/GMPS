@@ -1,0 +1,218 @@
+<mujoco model="arm3d">
+	<compiler coordinate="local" inertiafromgeom="true" angle="radian"/>
+	<option timestep="0.01" gravity="0 0 0" iterations="20" integrator="Euler"/>
+	<default >
+		<joint armature="0.04" damping="1" limited="true"/>
+		<geom condim="1" conaffinity="0" density="300" friction="0.8 0.1 0.1" contype="0" margin="0.002"/>
+	</default>
+	<worldbody >
+		<light diffuse=".5 .5 .5" dir="0 0 -1" pos="0 0 3"/>
+		<geom conaffinity="1" name="table" material="table" pos="0 0.5 -0.325" contype="1" type="plane" size="1 1 0.1"/>
+		<body name="r_shoulder_pan_link" pos="0 -0.6 0">
+			<geom pos="-0.06 0.05 0.2" type="sphere" name="e1" rgba="0.6 0.6 0.6 1" size="0.05"/>
+			<geom pos=" 0.06 0.05 0.2" type="sphere" name="e2" rgba="0.6 0.6 0.6 1" size="0.05"/>
+			<geom pos="-0.06 0.09 0.2" type="sphere" name="e1p" rgba="0.1 0.1 0.1 1" size="0.03"/>
+			<geom pos=" 0.06 0.09 0.2" type="sphere" name="e2p" rgba="0.1 0.1 0.1 1" size="0.03"/>
+			<geom type="capsule" name="sp" fromto="0 0 -0.4 0 0 0.2" size="0.1"/>
+			<joint name="r_shoulder_pan_joint" pos="0 0 0" range="-2.2854 1.714602" damping="1.0" type="hinge" axis="0 0 1"/>
+			<body name="r_shoulder_lift_link" pos="0.1 0 0">
+				<geom type="capsule" name="sl" fromto="0 -0.1 0 0 0.1 0" size="0.1"/>
+				<joint name="r_shoulder_lift_joint" pos="0 0 0" range="-0.5236 1.3963" damping="1.0" type="hinge" axis="0 1 0"/>
+				<body name="r_upper_arm_roll_link" pos="0 0 0">
+					<geom type="capsule" name="uar" fromto="-0.1 0 0 0.1 0 0" size="0.02"/>
+					<joint name="r_upper_arm_roll_joint" pos="0 0 0" range="-1.5 1.7" damping="0.1" type="hinge" axis="1 0 0"/>
+					<body name="r_upper_arm_link" pos="0 0 0">
+						<geom type="capsule" name="ua" fromto="0 0 0 0.4 0 0" size="0.06"/>
+						<body name="r_elbow_flex_link" pos="0.4 0 0">
+							<geom type="capsule" name="ef" fromto="0 -0.02 0 0.0 0.02 0" size="0.06"/>
+							<joint name="r_elbow_flex_joint" pos="0 0 0" range="-2.3213 0" damping="0.1" type="hinge" axis="0 1 0"/>
+							<body name="r_forearm_roll_link" pos="0 0 0">
+								<geom type="capsule" name="fr" fromto="-0.1 0 0 0.1 0 0" size="0.02"/>
+								<joint limited="true" name="r_forearm_roll_joint" pos="0 0 0" range="-1.5 1.5" damping=".1" type="hinge" axis="1 0 0"/>
+								<body name="r_forearm_link" pos="0 0 0">
+									<geom type="capsule" name="fa" fromto="0 0 0 0.291 0 0" size="0.05"/>
+									<body name="r_wrist_flex_link" pos="0.321 0 0">
+										<geom type="capsule" name="wf" fromto="0 -0.02 0 0 0.02 0" size="0.01"/>
+										<joint name="r_wrist_flex_joint" pos="0 0 0" range="-1.094 0" damping=".1" type="hinge" axis="0 1 0"/>
+										<body name="r_wrist_roll_link" pos="0 0 0">
+											<joint limited="true" name="r_wrist_roll_joint" pos="0 0 0" range="-1.5 1.5" damping="0.1" type="hinge" axis="1 0 0"/>
+											<body name="tips_arm" pos="0 0 0">
+												<geom pos="0.1 -0.1 0." type="sphere" name="tip_arml" size="0.01"/>
+												<geom pos="0.1 0.1 0." type="sphere" name="tip_armr" size="0.01"/>
+											</body>
+											<geom size="0.02" conaffinity="1" type="capsule" contype="1" fromto="0 -0.1 0. 0.0 +0.1 0"/>
+											<geom size="0.02" conaffinity="1" type="capsule" contype="1" fromto="0 -0.1 0. 0.1 -0.1 0"/>
+											<geom size="0.02" conaffinity="1" type="capsule" contype="1" fromto="0 +0.1 0. 0.1 +0.1 0"/>
+										</body>
+									</body>
+								</body>
+							</body>
+						</body>
+					</body>
+				</body>
+			</body>
+		</body>
+		<body name="distractor_0" pos="0.872941617087 -0.0347992430892 -0.323999999896">
+			<geom conaffinity="0" density="3242.09089354" material="distractor_0" mesh="distractor_mesh_0" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_0" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_0" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_1" pos="1.01395406553 -0.0571023666915 -0.323999969218">
+			<geom conaffinity="0" density="1333.19813685" material="distractor_1" mesh="distractor_mesh_1" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_1" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_1" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_2" pos="0.639490321911 -0.31576513041 -0.323991236393">
+			<geom conaffinity="0" density="702.940725824" material="distractor_2" mesh="distractor_mesh_2" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_2" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_2" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_3" pos="0.826741727515 -0.239928216563 -0.324005860662">
+			<geom conaffinity="0" density="3442.19933289" material="distractor_3" mesh="distractor_mesh_3" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_3" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_3" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_4" pos="0.699999991245 -0.299983461676 -0.324">
+			<geom conaffinity="0" density="600.963062059" material="distractor_4" mesh="distractor_mesh_4" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_4" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_4" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_5" pos="0.716359272822 -0.516403868923 -0.324001789083">
+			<geom conaffinity="0" density="641.377419248" material="distractor_5" mesh="distractor_mesh_5" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_5" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_5" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_6" pos="0.299990110491 -0.3 -0.324">
+			<geom conaffinity="0" density="1135.45243989" material="distractor_6" mesh="distractor_mesh_6" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_6" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_6" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_7" pos="0.1 -0.182786764024 -0.288390915653">
+			<geom conaffinity="0" density="15927.4964249" material="distractor_7" mesh="distractor_mesh_7" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_7" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_7" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_8" pos="-0.188507953696 -0.369371098843 -0.323999999999">
+			<geom conaffinity="0" density="654.631904092" material="distractor_8" mesh="distractor_mesh_8" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_8" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_8" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_9" pos="0.886064481009 0.0827867640245 -0.231706113405">
+			<geom conaffinity="0" density="206.988901482" material="distractor_9" mesh="distractor_mesh_9" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_9" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_9" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_10" pos="0.498921457864 0.2 -0.200651028466">
+			<geom conaffinity="0" density="1186.15765445" material="distractor_10" mesh="distractor_mesh_10" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_10" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_10" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_11" pos="0.768533957164 -0.0823529049759 -0.324">
+			<geom conaffinity="0" density="1505.2848959" material="distractor_11" mesh="distractor_mesh_11" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_11" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_11" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_12" pos="0.174929544044 0.0669848286522 -0.311794608141">
+			<geom conaffinity="0" density="4836.91342262" material="distractor_12" mesh="distractor_mesh_12" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_12" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_12" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_13" pos="-0.1 0.2 -0.252772766892">
+			<geom conaffinity="0" density="725.860266608" material="distractor_13" mesh="distractor_mesh_13" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_13" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_13" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_14" pos="0.30117213236 -0.0494139338201 -0.32517213236">
+			<geom conaffinity="0" density="874.61997372" material="distractor_14" mesh="distractor_mesh_14" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_14" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_14" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_15" pos="0.0912042133493 -0.05 -0.324">
+			<geom conaffinity="0" density="3236.99424045" material="distractor_15" mesh="distractor_mesh_15" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_15" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_15" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="distractor_16" pos="-0.0798893923552 -0.0793059786785 -0.252844934196">
+			<geom conaffinity="0" density="471.179069328" material="distractor_16" mesh="distractor_mesh_16" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="distractor_slidey_16" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="0 1 0"/>
+			<joint name="distractor_slidex_16" pos="0 0 0" range="-10.3213 10.3" damping="4.45474971273" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="object" pos="0.906802259647 0.228085289683 -0.323999999498">
+			<geom conaffinity="0" density="2328.24145675" material="object" mesh="object_mesh" contype="1" rgba="1 1 1 1" type="mesh"/>
+			<joint name="obj_slidey" pos="0 0 0" range="-10.3213 10.3" damping="3.14444675175" type="slide" axis="0 1 0"/>
+			<joint name="obj_slidex" pos="0 0 0" range="-10.3213 10.3" damping="3.14444675175" type="slide" axis="1 0 0"/>
+		</body>
+		<body name="goal" pos="0.45 -0.05 -0.323">
+			<geom conaffinity="0" density="0.00001" contype="0" rgba="1 0 0 1" type="cylinder" size="0.08 0.001 0.1"/>
+			<joint name="goal_slidey" pos="0 0 0" range="-10.3213 10.3" damping="0.5" type="slide" axis="0 1 0"/>
+			<joint name="goal_slidex" pos="0 0 0" range="-10.3213 10.3" damping="0.5" type="slide" axis="1 0 0"/>
+		</body>
+	</worldbody>
+	<asset >
+		<texture type="2d" name="table" file="push_textures/textures/table_textures/wpic_002.png"/>
+		<material name="table" specular="1" shininess="0.3" texture="table" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00140426448417 0.00140426448417 0.00140426448417" name="object_mesh" file="push_textures/train_objs/Love_Box_1.stl"/>
+		<mesh scale="0.00497488357355 0.00497488357355 0.00497488357355" name="distractor_mesh_0" file="push_textures/train_objs/heXS34oh3pk.stl"/>
+		<texture name="distractor_0" file="push_textures/textures/obj_textures/fibrous_0154.png"/>
+		<material name="distractor_0" specular="1" shininess="0.3" texture="distractor_0" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00167727542608 0.00167727542608 0.00167727542608" name="distractor_mesh_1" file="push_textures/train_objs/Rabbit_Complete.stl"/>
+		<texture name="distractor_1" file="push_textures/textures/obj_textures/perforated_0130.png"/>
+		<material name="distractor_1" specular="1" shininess="0.3" texture="distractor_1" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00876360642808 0.00876360642808 0.00876360642808" name="distractor_mesh_2" file="push_textures/train_objs/hubble_model_kit_5.stl"/>
+		<texture name="distractor_2" file="push_textures/textures/obj_textures/matted_0133.png"/>
+		<material name="distractor_2" specular="1" shininess="0.3" texture="distractor_2" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00293033089939 0.00293033089939 0.00293033089939" name="distractor_mesh_3" file="push_textures/train_objs/Stackable_Square_Container.stl"/>
+		<texture name="distractor_3" file="push_textures/textures/obj_textures/stained_0032.png"/>
+		<material name="distractor_3" specular="1" shininess="0.3" texture="distractor_3" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00229508855301 0.00229508855301 0.00229508855301" name="distractor_mesh_4" file="push_textures/train_objs/mug.stl"/>
+		<texture name="distractor_4" file="push_textures/textures/obj_textures/meshed_0130.png"/>
+		<material name="distractor_4" specular="1" shininess="0.3" texture="distractor_4" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00120224188176 0.00120224188176 0.00120224188176" name="distractor_mesh_5" file="push_textures/train_objs/lspike2.stl"/>
+		<texture name="distractor_5" file="push_textures/textures/obj_textures/striped_0064.png"/>
+		<material name="distractor_5" specular="1" shininess="0.3" texture="distractor_5" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00390727281521 0.00390727281521 0.00390727281521" name="distractor_mesh_6" file="push_textures/train_objs/Salty_Body.stl"/>
+		<texture name="distractor_6" file="push_textures/textures/obj_textures/bumpy_0154.png"/>
+		<material name="distractor_6" specular="1" shininess="0.3" texture="distractor_6" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00148371184779 0.00148371184779 0.00148371184779" name="distractor_mesh_7" file="push_textures/train_objs/Sunglasses.stl"/>
+		<texture name="distractor_7" file="push_textures/textures/obj_textures/pitted_0054.png"/>
+		<material name="distractor_7" specular="1" shininess="0.3" texture="distractor_7" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00478421371329 0.00478421371329 0.00478421371329" name="distractor_mesh_8" file="push_textures/train_objs/Epic_Crift.stl"/>
+		<texture name="distractor_8" file="push_textures/textures/obj_textures/striped_0117.png"/>
+		<material name="distractor_8" specular="1" shininess="0.3" texture="distractor_8" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.0018458777319 0.0018458777319 0.0018458777319" name="distractor_mesh_9" file="push_textures/train_objs/Body1.stl"/>
+		<texture name="distractor_9" file="push_textures/textures/obj_textures/lacelike_0011.png"/>
+		<material name="distractor_9" specular="1" shininess="0.3" texture="distractor_9" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00175658236646 0.00175658236646 0.00175658236646" name="distractor_mesh_10" file="push_textures/train_objs/Tree_2_tree.stl"/>
+		<texture name="distractor_10" file="push_textures/textures/obj_textures/frilly_0042.png"/>
+		<material name="distractor_10" specular="1" shininess="0.3" texture="distractor_10" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00715806021225 0.00715806021225 0.00715806021225" name="distractor_mesh_11" file="push_textures/train_objs/Trophy.stl"/>
+		<texture name="distractor_11" file="push_textures/textures/obj_textures/flecked_0056.png"/>
+		<material name="distractor_11" specular="1" shininess="0.3" texture="distractor_11" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00105686612417 0.00105686612417 0.00105686612417" name="distractor_mesh_12" file="push_textures/train_objs/Recycle_Bin_For_Cans.stl"/>
+		<texture name="distractor_12" file="push_textures/textures/obj_textures/pitted_0133.png"/>
+		<material name="distractor_12" specular="1" shininess="0.3" texture="distractor_12" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00306406402045 0.00306406402045 0.00306406402045" name="distractor_mesh_13" file="push_textures/train_objs/Tree_2_pot.stl"/>
+		<texture name="distractor_13" file="push_textures/textures/obj_textures/paisley_0082.png"/>
+		<material name="distractor_13" specular="1" shininess="0.3" texture="distractor_13" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00117213235976 0.00117213235976 0.00117213235976" name="distractor_mesh_14" file="push_textures/train_objs/galan_trémolet_.stl"/>
+		<texture name="distractor_14" file="push_textures/textures/obj_textures/wrinkled_0036.png"/>
+		<material name="distractor_14" specular="1" shininess="0.3" texture="distractor_14" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00703987608955 0.00703987608955 0.00703987608955" name="distractor_mesh_15" file="push_textures/train_objs/famicon-port-cover.stl"/>
+		<texture name="distractor_15" file="push_textures/textures/obj_textures/blotchy_0022.png"/>
+		<material name="distractor_15" specular="1" shininess="0.3" texture="distractor_15" rgba="0.9 0.9 0.9 1"/>
+		<mesh scale="0.00308640266356 0.00308640266356 0.00308640266356" name="distractor_mesh_16" file="push_textures/train_objs/Tree_1_pot.stl"/>
+		<texture name="distractor_16" file="push_textures/textures/obj_textures/veined_0133.png"/>
+		<material name="distractor_16" specular="1" shininess="0.3" texture="distractor_16" rgba="0.9 0.9 0.9 1"/>
+		<texture name="object" file="push_textures/textures/obj_textures/grid_0132.png"/>
+		<material name="object" specular="1" shininess="0.3" texture="object" rgba="0.9 0.9 0.9 1"/>
+	</asset>
+	<actuator >
+		<motor ctrllimited="true" joint="r_shoulder_pan_joint" ctrlrange="-2.0 2.0"/>
+		<motor ctrllimited="true" joint="r_shoulder_lift_joint" ctrlrange="-2.0 2.0"/>
+		<motor ctrllimited="true" joint="r_upper_arm_roll_joint" ctrlrange="-2.0 2.0"/>
+		<motor ctrllimited="true" joint="r_elbow_flex_joint" ctrlrange="-2.0 2.0"/>
+		<motor ctrllimited="true" joint="r_forearm_roll_joint" ctrlrange="-2.0 2.0"/>
+		<motor ctrllimited="true" joint="r_wrist_flex_joint" ctrlrange="-2.0 2.0"/>
+		<motor ctrllimited="true" joint="r_wrist_roll_joint" ctrlrange="-2.0 2.0"/>
+	</actuator>
+</mujoco>
