@@ -26,9 +26,11 @@ import sandbox.rocky.tf.core.layers as L
 
 from multiworld.envs.mujoco.sawyer_xyz.push.sawyer_push import  SawyerPushEnv 
 from multiworld.envs.mujoco.sawyer_xyz.pickPlace.sawyer_pick_and_place import SawyerPickPlaceEnv
+from multiworld.envs.mujoco.sawyer_xyz.pickPlace.sawyer_coffee import SawyerCoffeeEnv
 from multiworld.envs.mujoco.sawyer_xyz.door.sawyer_door_open import  SawyerDoorOpenEnv
+from multiworld.envs.mujoco.sawyer_xyz.multi_domain.push_door import Sawyer_MultiDomainEnv
 
-from rllab.envs.mujoco.ant_env_rand_goal_ring_contextual import AntEnvRandGoalRing
+from rllab.envs.mujoco.ant_env_rand_goal_ring import AntEnvRandGoalRing
 from transferHMS.envs.dclaw.dclaw_screw_rand_goal import DClawScrewRandGoal
 
 from multiworld.core.flat_goal_env import FlatGoalEnv
@@ -89,7 +91,12 @@ def experiment(variant):
 
     use_images = 'conv' in policyType
 
-    if 'Push' == envType:       
+
+
+    if 'MultiDomain' in envType:
+        baseEnv = Sawyer_MultiDomainEnv(tasks = tasks , image = use_images , mpl = max_path_length)
+
+    elif 'Push' == envType:       
         baseEnv = SawyerPushEnv(tasks = tasks , image = use_images , mpl = max_path_length)
 
     elif envType == 'sparsePush':
@@ -101,6 +108,9 @@ def experiment(variant):
 
     elif 'Door' in envType:
         baseEnv = SawyerDoorOpenEnv(tasks = tasks , image = use_images , mpl = max_path_length) 
+
+    elif 'Coffee' in envType:
+        baseEnv = SawyerCoffeeEnv(mpl = max_path_length)
         
     elif 'Ant' in envType:
         env = TfEnv(normalize(AntEnvRandGoalRing()))
@@ -111,19 +121,21 @@ def experiment(variant):
     else:
         assert True == False
 
-    if envType in ['Push' , 'PickPlace' , 'Door']:
+    if envType in ['Push' , 'PickPlace' , 'Door' , 'SawyerMultiDomain' , 'Coffee']:
         if use_images:
             obs_keys = ['img_observation']
         else:
             obs_keys = ['state_observation']
         env = TfEnv(NormalizedBoxEnv( FinnMamlEnv(FlatGoalEnv(baseEnv, obs_keys=obs_keys) , reset_mode = 'task')))    
 
-    
     algoClass = MAMLIL
     baseline = LinearFeatureBaseline(env_spec = env.spec)
 
     load_policy = variant['load_policy']
-    
+
+    hidden_sizes = variant['hidden_sizes']
+
+
     if load_policy !=None:
         policy = None
         load_policy = variant['load_policy']
@@ -137,7 +149,7 @@ def experiment(variant):
                 env_spec=env.spec,
                 grad_step_size=init_flr,
                 hidden_nonlinearity=tf.nn.relu,
-                hidden_sizes=(100,100),
+                hidden_sizes=hidden_sizes,
                 init_flr_full=init_flr,
                 latent_dim=ldim
             )
@@ -149,7 +161,7 @@ def experiment(variant):
                 env_spec=env.spec,
                 grad_step_size=init_flr,
                 hidden_nonlinearity=tf.nn.relu,
-                hidden_sizes=(100,100),
+                hidden_sizes=hidden_sizes,
                 init_flr_full=init_flr,
                 latent_dim=ldim
             )
@@ -160,7 +172,7 @@ def experiment(variant):
         env_spec=env.spec,
         grad_step_size=init_flr,
         hidden_nonlinearity=tf.nn.relu,
-        hidden_sizes=(100, 100),                  
+        hidden_sizes=hidden_sizes,                  
         extra_input_dim=(0 if extra_input is "" else extra_input_dim),
     )
    
@@ -177,7 +189,7 @@ def experiment(variant):
         init_flr=init_flr,
 
         hidden_nonlinearity=tf.nn.relu,
-        hidden_sizes=(100, 100),                 
+        hidden_sizes=hidden_sizes,                 
         extra_input_dim=(0 if extra_input is "" else extra_input_dim),
         )
        
@@ -192,7 +204,7 @@ def experiment(variant):
         max_path_length=max_path_length,
         meta_batch_size=meta_batch_size,  # number of tasks sampled for beta grad update
         num_grad_updates=num_grad_updates,  # number of alpha grad updates
-        n_itr=500, #100
+        n_itr=50, 
         make_video=False,
         use_maml=True,
         use_pooled_goals=True,

@@ -8,7 +8,7 @@ from rllab.sampler.utils import rollout
 import os
 
 
-max_path_length = 50
+max_path_length = 100
 videoDir = 'Videos/'
 if os.path.isdir(videoDir)!=True:
     os.makedirs(videoDir , exist_ok = True)
@@ -18,9 +18,10 @@ parser.add_argument('sim_itr', type=int,
                         help='path to the snapshot file')
 args = parser.parse_args()
 
-for taskIdx in range(5):
+for taskIdx in range(1):
 
-    _file = 'Task_'+str(taskIdx)+'/itr_'+str(args.sim_itr)+'.pkl'
+    #_file = 'Task_'+str(taskIdx)+'/itr_'+str(args.sim_itr)+'.pkl'
+    _file = 'itr_0.pkl'
     with tf.Session() as sess:
 
         data = joblib.load(_file)
@@ -35,7 +36,7 @@ for taskIdx in range(5):
                 uninit_vars.append(var)
         sess.run(tf.initialize_variables(uninit_vars))
 
-        policy.std_modifier = 0.00001
+        #policy.std_modifier = 0.00001
         policy.recompute_dist_for_adjusted_std()
        
 

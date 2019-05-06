@@ -118,17 +118,17 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
     @overrides
     def log_diagnostics(self, paths, prefix='', logger = None):
 
-        
-        from rllab.misc import logger
-        if type(paths[0]) == dict:
-            #For SAC
-            # for key in self.info_logKeys:
-            #     nested_list = [[i[key] for i in paths[j]['env_infos']] for j in range(len(paths))]
-            #     logger.record_tabular(prefix + 'last_'+key, np.mean([_list[-1] for _list in nested_list]) )
+        pass        
+        # from rllab.misc import logger
+        # if type(paths[0]) == dict:
+        #     #For SAC
+        #     # for key in self.info_logKeys:
+        #     #     nested_list = [[i[key] for i in paths[j]['env_infos']] for j in range(len(paths))]
+        #     #     logger.record_tabular(prefix + 'last_'+key, np.mean([_list[-1] for _list in nested_list]) )
 
-            #For rllab
-            for key in self.info_logKeys:
-                logger.record_tabular(prefix + 'last_'+key, np.mean([path['env_infos'][key][-1] for path in paths]) )
+        #     #For rllab
+        #     for key in self.info_logKeys:
+        #         logger.record_tabular(prefix + 'last_'+key, np.mean([path['env_infos'][key][-1] for path in paths]) )
 
         # else:
         #     raise NotImplementedError

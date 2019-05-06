@@ -194,19 +194,19 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         no_update_param_keys = []
         sess = tf.get_default_session()
 
-        theta0_dist_info_list = []
-        for i in range(num_tasks):
-            if 'agent_infos_orig' not in samples[i].keys():
-                assert False, "agent_infos_orig is missing--this should have been handled by process_samples"
-            else:
-                agent_infos_orig = samples[i]['agent_infos_orig']
-            theta0_dist_info_list += [agent_infos_orig[k] for k in agent_infos_orig.keys()]
+        # theta0_dist_info_list = []
+        # for i in range(num_tasks):
+        #     if 'agent_infos_orig' not in samples[i].keys():
+        #         assert False, "agent_infos_orig is missing--this should have been handled by process_samples"
+        #     else:
+        #         agent_infos_orig = samples[i]['agent_infos_orig']
+        #     theta0_dist_info_list += [agent_infos_orig[k] for k in agent_infos_orig.keys()]
 
 
-        theta_l_dist_info_list = []
-        for i in range(num_tasks):
-            agent_infos = samples[i]['agent_infos']
-            theta_l_dist_info_list += [agent_infos[k] for k in agent_infos.keys()]
+        # theta_l_dist_info_list = []
+        # for i in range(num_tasks):
+        #     agent_infos = samples[i]['agent_infos']
+        #     theta_l_dist_info_list += [agent_infos[k] for k in agent_infos.keys()]
 
         obs_list, action_list, adv_list = [], [], []
         for i in range(num_tasks):
@@ -216,8 +216,8 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             action_list.append(inputs[1])
             adv_list.append(inputs[2])
 
-        #inputs = obs_list + action_list + adv_list
-        inputs = theta0_dist_info_list + theta_l_dist_info_list + obs_list + action_list + adv_list
+        inputs = obs_list + action_list + adv_list
+        #inputs = theta0_dist_info_list + theta_l_dist_info_list + obs_list + action_list + adv_list
 
         # To do a second update, replace self.all_params below with the params that were used to collect the policy.
         init_param_values = None

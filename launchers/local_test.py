@@ -16,6 +16,9 @@ from sandbox.rocky.tf.policies.maml_minimal_gauss_mlp_policy_biasonlyadaptiveste
 from multiworld.envs.mujoco.sawyer_xyz.push.sawyer_push import  SawyerPushEnv 
 from multiworld.envs.mujoco.sawyer_xyz.pickPlace.sawyer_pick_and_place import SawyerPickPlaceEnv
 from multiworld.envs.mujoco.sawyer_xyz.door.sawyer_door_open import  SawyerDoorOpenEnv
+from multiworld.envs.mujoco.sawyer_xyz.multi_domain.push_door import Sawyer_MultiDomainEnv
+from multiworld.envs.mujoco.sawyer_xyz.pickPlace.sawyer_coffee import SawyerCoffeeEnv
+
 from multiworld.core.flat_goal_env import FlatGoalEnv
 from multiworld.core.finn_maml_env import FinnMamlEnv
 from multiworld.core.wrapper_env import NormalizedBoxEnv
@@ -53,7 +56,11 @@ def experiment(variant):
  
     use_images = 'conv' in policyType
 
-    if 'Push' in envType:   
+
+    if 'MultiDomain' in envType:
+        baseEnv = Sawyer_MultiDomainEnv(tasks = tasks , image = use_images , mpl = max_path_length)
+
+    elif 'Push' in envType:   
         baseEnv = SawyerPushEnv(tasks = tasks , image = use_images , mpl = max_path_length)
        
 
@@ -62,7 +69,10 @@ def experiment(variant):
        
     elif 'Door' in envType:
         baseEnv = SawyerDoorOpenEnv(tasks = tasks , image = use_images , mpl = max_path_length) 
-       
+
+    elif 'Coffee' in envType:
+        baseEnv = SawyerCoffeeEnv(mpl = max_path_length)
+
 
     else:
         raise AssertionError('Envs must be Push, PickPlace or Door')
@@ -169,36 +179,43 @@ def experiment(variant):
 
 val = False
 
-envType = 'Door' ; max_path_length = 100  ; tasksFile = 'door_60deg_val1'
+#envType = 'SawyerMultiDomain'; max_path_length = 100  ;  tasksFile =  'multi_domain/push_door_v1'
+envType = 'Coffee' ; max_path_length = 100 ; tasksFile = 'push_v4'
 #envType = 'Push' ; max_path_length = 50 ; tasksFile = 'push_v4_val'
-adamSteps = 200 ;  mbs = 20; 
-policyType = 'basic' 
+
+#policyType = 'basic' 
 #policyType = 'fullAda_Bias'
+policyType = 'biasAda_Bias'
 #policyType = 'conv_fcBiasAda'
 #policyType = 'conv_no_update'
-ldim = 2 ;  fbs = 20; initFlr = 0 ; seed = 1 ; metaFileItr = 18
+initFlr = 0.0 ; seed = 0 ; metaFileItr = 15
 
 batch_size = 2000
 
 
-initFile = '/home/russell/gmps/data/local/TRAIN/basic/adamSteps_200_mbs_20_fbs_20_initFlr_0_seed_0/itr_18.pkl'
+
+#initFile = '/home/russell/data/s3/SawyerMultiDomain-Push-Door-v1/gmps/net_100-100-100-100-/policyType_biasAda_Bias/ldim_8/adamSteps_500_mbs_6_fbs_50_initFlr_0.5_seed_1/itr_15.pkl'
+#initFile = '/home/russell/doodad/examples/tmp_output/SawyerMultiDomain-Push-Door-v1/gmps/net_100-100-/policyType_fullAda_Bias/ldim_2/adamSteps_500_mbs_3_fbs_20_initFlr_0.5_seed_0/itr_12.pkl'
+#expPrefix = 'postSub-Testing-Imitation-valSet-Door-v4-mpl'+str(max_path_length)+'/'+str(policyType)+'_ldim_'+str(ldim)+'_fbs_'+str(fbs)+'_initFlr_'+str(initFlr)+'_metaFileItr_'+str(metaFileItr)+'_mbs_'+str(mbs)+'_adam'+str(adamSteps)+'_bs_'+str(batch_size)+'_seed_'+str(seed)
+initFile = '/home/russell/doodad/examples/tmp_output/Coffee-pick_place/gmps/net_150-100-150-/policyType_biasAda_Bias/ldim_2/adamSteps_500_mbs_3_fbs_20_initFlr_0.0_seed_0/itr_9.pkl'
 
 
-expPrefix = 'postSub-Testing-Imitation-valSet-Door-v4-mpl'+str(max_path_length)+'/'+str(policyType)+'_ldim_'+str(ldim)+'_fbs_'+str(fbs)+'_initFlr_'+str(initFlr)+'_metaFileItr_'+str(metaFileItr)+'_mbs_'+str(mbs)+'_adam'+str(adamSteps)+'_bs_'+str(batch_size)+'_seed_'+str(seed)
+expPrefix = 'SawyerCoffee/'
 
 if 'conv' in policyType:
     expPrefix = 'img-'+expPrefix
 
-for index in range(1,11):
+for index in range(1):
     expPrefix_numItr = expPrefix+'/Task_'+str(index)+'/'
 
    
-    for n_itr in range(1,6):
-        tf.reset_default_graph()
-        expName = expPrefix_numItr+ 'Itr_'+str(n_itr)
-        variant = {'taskIndex':index, 'init_file': initFile,  'n_parallel' : 1 ,   'log_dir':OUTPUT_DIR+expName+'/', 'seed' : seed  , 'tasksFile' : tasksFile , 'batch_size' : batch_size,
-                        'policyType' : policyType ,  'n_itr' : n_itr , 'default_step' : initFlr , 'envType' : envType , 'max_path_length' : max_path_length}
+    #for n_itr in range(1,6):
+    n_itr = 1
+    tf.reset_default_graph()
+    expName = expPrefix_numItr+ 'Itr_'+str(n_itr)
+    variant = {'taskIndex':index, 'init_file': initFile,  'n_parallel' : 1 ,   'log_dir':OUTPUT_DIR+expName+'/', 'seed' : seed  , 'tasksFile' : tasksFile , 'batch_size' : batch_size,
+                    'policyType' : policyType ,  'n_itr' : n_itr , 'default_step' : initFlr , 'envType' : envType , 'max_path_length' : max_path_length}
 
-        experiment(variant)
+    experiment(variant)
 
-    
+

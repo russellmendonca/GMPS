@@ -134,8 +134,6 @@ class BatchMAMLPolopt(RLAlgorithm):
         self.use_maml_il = use_maml_il
         self.test_on_training_goals= test_on_training_goals
         self.testing_itrs = TESTING_ITRS
-        if self.metalearn_baseline:
-            self.testing_itrs.insert(0,0)
         logger.log("test_on_training_goals %s" % self.test_on_training_goals)
         self.limit_demos_num = limit_demos_num
         self.test_goals_mult = test_goals_mult
@@ -244,7 +242,7 @@ class BatchMAMLPolopt(RLAlgorithm):
         return paths
 
     def load_expert_traces(self):
-        self.num_tasks = 10
+        self.num_tasks = self.meta_batch_size
         self.expert_traces = {taskidx : joblib.load(self.expert_trajs_dir+str(taskidx)+".pkl") for taskidx in range(self.num_tasks)}
         for taskidx in range(self.num_tasks):
             for path in self.expert_traces[taskidx]:
