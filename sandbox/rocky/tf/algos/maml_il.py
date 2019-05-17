@@ -210,12 +210,7 @@ class MAMLIL(BatchMAMLPolopt):
 
         target = [self.policy.all_params[key] for key in self.policy.all_params.keys()]
 
-        #if self.clamp_preUpdate_latent:
-        #target = [self.policy.all_params[key] for key in self.policy.all_params.keys() if key!='bias_transformation']
-        #else:
-        target = [self.policy.all_params[key] for key in self.policy.all_params.keys()]
-
-
+       
         if self.post_policy:
             bias_contraint = tf.reduce_mean((biases[0] - biases[2])**2 + (biases[1] - biases[3])**2)
             outer_surr_obj+=10*bias_contraint
