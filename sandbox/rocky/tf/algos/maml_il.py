@@ -211,9 +211,9 @@ class MAMLIL(BatchMAMLPolopt):
         target = [self.policy.all_params[key] for key in self.policy.all_params.keys()]
 
         #if self.clamp_preUpdate_latent:
-        target = [self.policy.all_params[key] for key in self.policy.all_params.keys() if key!='bias_transformation']
+        #target = [self.policy.all_params[key] for key in self.policy.all_params.keys() if key!='bias_transformation']
         #else:
-        #target = [self.policy.all_params[key] for key in self.policy.all_params.keys()]
+        target = [self.policy.all_params[key] for key in self.policy.all_params.keys()]
 
 
         if self.post_policy:
