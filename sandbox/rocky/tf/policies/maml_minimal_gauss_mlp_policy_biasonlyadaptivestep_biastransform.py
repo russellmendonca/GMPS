@@ -169,7 +169,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         self.surr_objs = surr_objs_tensor
 
 
-    def compute_updated_dists(self, samples):
+    def compute_updated_dists(self, samples , get_contexts= False):
         """ Compute fast gradients once per iteration and pull them out of tensorflow for sampling with the post-update policy.
         """
         start = time.time()
@@ -212,7 +212,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             action_list.append(inputs[1])
             adv_list.append(inputs[2])
 
-        inputs =  theta0_dist_info_list + theta_l_dist_info_list + obs_list + action_list + adv_list
+        inputs =  obs_list + action_list + adv_list
         #inputs = obs_list + action_list + adv_list
 
         # To do a second update, replace self.all_params below with the params that were used to collect the policy.
@@ -242,6 +242,9 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         # pull new param vals out of tensorflow, so gradient computation only done once ## first is the vars, second the values
         # these are the updated values of the params after the gradient step
         self.all_param_vals = sess.run(self.all_fast_params_tensor, feed_dict=dict(list(zip(self.input_list_for_grad, inputs))))
+        
+        if get_contexts:
+            return [self.all_param_vals[i]['bias_transformation'] for i in range(len(self.all_param_vals))]
 
         if init_param_values is not None:
             self.assign_params(self.all_params, init_param_values)
@@ -438,7 +441,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             all_params['W' + str(len(hidden_sizes)) + '_stepsize'] = tf.Variable(self.init_flr_full*tf.ones_like(W), name="W" + str(len(hidden_sizes)) + '_stepsize')
             all_params['b' + str(len(hidden_sizes)) + '_stepsize'] = tf.Variable(self.init_flr_full*tf.ones_like(b), name="b" + str(len(hidden_sizes)) + '_stepsize')
 
-            all_params['bias_transformation'] = tf.Variable(tf.ones(self.latent_dim), name="bias_transformation")
+            all_params['bias_transformation'] = tf.Variable(tf.zeros(self.latent_dim), name="bias_transformation")
             all_params['bias_transformation_stepsize'] = tf.Variable(self.init_flr_full*tf.ones_like(all_params['bias_transformation']), name="bias_transformation_stepsize")
 
         return all_params

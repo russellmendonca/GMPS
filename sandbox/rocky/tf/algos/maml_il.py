@@ -39,6 +39,7 @@ class MAMLIL(BatchMAMLPolopt):
         self.l2loss_std_multiplier = l2loss_std_mult
         self.ism = importance_sampling_modifier
         self.old_start_il_loss = None
+
         if "extra_input" in kwargs.keys():
             self.extra_input = kwargs["extra_input"]
         else:
@@ -170,13 +171,30 @@ class MAMLIL(BatchMAMLPolopt):
         obs_vars, action_vars, _, expert_action_vars = self.make_vars('test')  # adv_vars was here instead of _
         
         outer_surr_objs = []
-        # outer_surr_objs_slow = []
-        # old_outer_surr_objs = []
-        updated_params = []
+        biases = []
+        debugVals = [1,-1,-1,1]
         for i in range(self.meta_batch_size):  # here we cycle through the last grad update but for validation tasks (i is the index of a task)
-           
+            
+
             dist_info_sym_i, updated_params_i = self.policy.updated_dist_info_sym(task_id=i,surr_obj=all_surr_objs[-1][i],new_obs_var=obs_vars[i], params_dict=new_params[i])
-            updated_params.append(updated_params_i)
+            
+            if self.post_policy:
+                bs = tf.shape(obs_vars[i])[0]
+                
+                bias = updated_params_i['bias_transformation']
+                #bias = debugVals[i]*tf.ones((1,))
+
+                #bias = tf.sign(bias)
+                biases.append(bias)
+                tiled_bias = tf.tile(bias[None, :], (bs,1)) + 1e-1*tf.random_normal((bs, 2))
+                #tiled_bias = tf.tile(bias[None, :], (bs,1))
+                
+                contextual_obs = tf.concat([obs_vars[i], tiled_bias], axis=1)
+                dist_info_sym_i = self.post_policy.dist_info_sym(contextual_obs)
+           
+               
+            self.biases = biases
+            #updated_params.append(updated_params_i)
             # # here we define the loss for meta-gradient
             a_star = expert_action_vars[i]
             s = dist_info_sym_i["log_std"]
@@ -184,11 +202,26 @@ class MAMLIL(BatchMAMLPolopt):
             outer_surr_obj = tf.reduce_mean(m**2 - 2*m*a_star+a_star**2+self.l2loss_std_multiplier*(tf.square(tf.exp(s))))
             outer_surr_objs.append(outer_surr_obj)
 
+       
 
-        outer_surr_obj = tf.reduce_mean(tf.stack(outer_surr_objs, 0))  # mean over all the different tasks
+        outer_surr_obj = tf.reduce_mean(tf.stack(outer_surr_objs, 0)) # mean over all the different tasks
+
         input_vars_list += obs_vars + action_vars + expert_action_vars + old_dist_info_vars_list  # +adv_vars # TODO: kill action_vars from this list, and if we're not doing kl, kill old_dist_info_vars_list too
+
         target = [self.policy.all_params[key] for key in self.policy.all_params.keys()]
-           
+
+        #if self.clamp_preUpdate_latent:
+        target = [self.policy.all_params[key] for key in self.policy.all_params.keys() if key!='bias_transformation']
+        #else:
+        #target = [self.policy.all_params[key] for key in self.policy.all_params.keys()]
+
+
+        if self.post_policy:
+            bias_contraint = tf.reduce_mean((biases[0] - biases[2])**2 + (biases[1] - biases[3])**2)
+            outer_surr_obj+=10*bias_contraint
+            target = [self.policy.all_params[key] for key in self.policy.all_params.keys() if key!='bias_transformation']
+            target.extend([self.post_policy.all_params[key] for key in self.post_policy.all_params.keys()])
+
         self.optimizer.update_opt(
             loss=outer_surr_obj,
             target=target,
@@ -255,7 +288,7 @@ class MAMLIL(BatchMAMLPolopt):
         dist_info_list = []
         for i in range(self.meta_batch_size):
             # agent_infos = {x:all_samples_data[self.kl_constrain_step][i]['agent_infos'][x] for x in ['mean','log_std']}  ##kl_constrain_step default is -1, meaning post all alpha grad updates
-            agent_infos = all_samples_data[self.kl_constrain_step][i]['agent_infos']  ##kl_constrain_step default is -1, meaning post all alpha grad updates
+            agent_infos = all_samples_data[-1][i]['agent_infos']  ##kl_constrain_step default is -1, meaning post all alpha grad updates
             dist_info_list += [agent_infos[k] for k in self.policy.distribution.dist_info_keys]
         input_vals_list += tuple(dist_info_list)  # This populates old_dist_info_vars_list
 
@@ -264,7 +297,7 @@ class MAMLIL(BatchMAMLPolopt):
         if itr not in TESTING_ITRS:
             steps = self.adam_curve[min(itr,len(self.adam_curve)-1)]
             logger.log("Optimizing using %s Adam steps on itr %s" % (steps, itr))
-            start_loss = self.optimizer.optimize(input_vals_list, steps=steps)
+            start_loss = self.optimizer.optimize(input_vals_list, steps=steps , latent = self.biases)
             # self.optimizer.optimize(input_vals_list)
             return start_loss
 

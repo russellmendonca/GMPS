@@ -9,11 +9,12 @@ from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import stub, run_experiment_lite
 
 #####TODO: combine all these into one policy with different options. Maybe also include MAESN here.
-from sandbox.rocky.tf.policies.maml_minimal_gauss_mlp_policy import MAMLGaussianMLPPolicy as basic_policy
+from sandbox.rocky.tf.policies.minimal_gauss_mlp_policy import GaussianMLPPolicy as basic_policy
+from sandbox.rocky.tf.policies.maml_minimal_gauss_mlp_policy import MAMLGaussianMLPPolicy as basic_mamlPolicy
 #from sandbox.rocky.tf.policies.maml_minimal_gauss_mlp_policy_adaptivestep import MAMLGaussianMLPPolicy as fullAda_basic_policy
-from sandbox.rocky.tf.policies.maml_minimal_gauss_mlp_policy_adaptivestep_biastransform import MAMLGaussianMLPPolicy as fullAda_Bias_policy
-from sandbox.rocky.tf.policies.maml_minimal_gauss_mlp_policy_biasonlyadaptivestep_biastransform import MAMLGaussianMLPPolicy as biasAda_Bias_policy
-from sandbox.rocky.tf.policies.maml_minimal_conv_gauss_mlp_policy import MAMLGaussianMLPPolicy as conv_policy
+from sandbox.rocky.tf.policies.maml_minimal_gauss_mlp_policy_adaptivestep_biastransform import MAMLGaussianMLPPolicy as fullAda_Bias_mamlPolicy
+from sandbox.rocky.tf.policies.maml_minimal_gauss_mlp_policy_biasonlyadaptivestep_biastransform import MAMLGaussianMLPPolicy as biasAda_Bias_mamlPolicy
+from sandbox.rocky.tf.policies.maml_minimal_conv_gauss_mlp_policy import MAMLGaussianMLPPolicy as conv_mamlPolicy
 #from sandbox.rocky.tf.policies.maesn_minimal_gauss_mlp_policy import MAMLGaussianMLPPolicy as maesn_policy
 #from sandbox.rocky.tf.policies.maml_minimal_conv_gauss_mlp_policy import MAMLGaussianMLPPolicy as basic_conv_policy
 
@@ -29,6 +30,7 @@ from multiworld.envs.mujoco.sawyer_xyz.pickPlace.sawyer_pick_and_place import Sa
 from multiworld.envs.mujoco.sawyer_xyz.pickPlace.sawyer_coffee import SawyerCoffeeEnv
 from multiworld.envs.mujoco.sawyer_xyz.door.sawyer_door_open import  SawyerDoorOpenEnv
 from multiworld.envs.mujoco.sawyer_xyz.multi_domain.push_door import Sawyer_MultiDomainEnv
+from multiworld.envs.mujoco.sawyer_xyz.push.sawyer_multiPush import SawyerMultiPushEnv
 
 from rllab.envs.mujoco.ant_env_rand_goal_ring import AntEnvRandGoalRing
 from transferHMS.envs.dclaw.dclaw_screw_rand_goal import DClawScrewRandGoal
@@ -72,6 +74,8 @@ def experiment(variant):
     seed = variant['seed'] ; n_parallel = 1; log_dir = variant['log_dir']
     setup(seed, n_parallel , log_dir)
 
+    diff_post_policy = variant['diff_post_policy']
+    
     fast_batch_size = variant['fbs']  ; meta_batch_size = variant['mbs']
 
     adam_steps = variant['adam_steps'] ; max_path_length = variant['max_path_length']
@@ -95,6 +99,9 @@ def experiment(variant):
 
     if 'MultiDomain' in envType:
         baseEnv = Sawyer_MultiDomainEnv(tasks = tasks , image = use_images , mpl = max_path_length)
+
+    elif 'MultiPush' in envType:
+        baseEnv = SawyerMultiPushEnv(tasks = tasks , image = use_images , mpl = max_path_length)
 
     elif 'Push' == envType:       
         baseEnv = SawyerPushEnv(tasks = tasks , image = use_images , mpl = max_path_length)
@@ -121,7 +128,7 @@ def experiment(variant):
     else:
         assert True == False
 
-    if envType in ['Push' , 'PickPlace' , 'Door' , 'SawyerMultiDomain' , 'Coffee']:
+    if envType in ['Push' , 'PickPlace' , 'Door' , 'SawyerMultiDomain' , 'Coffee' , 'SawyerMultiPush']:
         if use_images:
             obs_keys = ['img_observation']
         else:
@@ -132,8 +139,8 @@ def experiment(variant):
     baseline = LinearFeatureBaseline(env_spec = env.spec)
 
     load_policy = variant['load_policy']
-
     hidden_sizes = variant['hidden_sizes']
+
 
 
     if load_policy !=None:
@@ -144,7 +151,7 @@ def experiment(variant):
 
     elif 'fullAda_Bias' in policyType:
        
-        policy = fullAda_Bias_policy(
+        policy = fullAda_Bias_mamlPolicy(
                 name="policy",
                 env_spec=env.spec,
                 grad_step_size=init_flr,
@@ -156,7 +163,7 @@ def experiment(variant):
 
     elif 'biasAda_Bias' in policyType:
 
-        policy = biasAda_Bias_policy(
+        policy = biasAda_Bias_mamlPolicy(
                 name="policy",
                 env_spec=env.spec,
                 grad_step_size=init_flr,
@@ -167,7 +174,7 @@ def experiment(variant):
             )
 
     elif 'basic' in policyType:
-        policy =  basic_policy(
+        policy =  basic_mamlPolicy(
         name="policy",
         env_spec=env.spec,
         grad_step_size=init_flr,
@@ -181,7 +188,7 @@ def experiment(variant):
 
         baseline = ZeroBaseline(env_spec=env.spec)
 
-        policy = conv_policy(
+        policy = conv_mamlPolicy(
         name="policy",
         latent_dim = ldim,
         policyType = policyType,
@@ -192,14 +199,29 @@ def experiment(variant):
         hidden_sizes=hidden_sizes,                 
         extra_input_dim=(0 if extra_input is "" else extra_input_dim),
         )
-       
+    
+    if diff_post_policy:
+        post_policy = basic_policy(
+                name="post_policy",
+                env_spec=env.spec,
+                hidden_nonlinearity=tf.nn.relu,
+                hidden_sizes=hidden_sizes,
+                latent_dim = ldim,
+                std_modifier = post_std_modifier
+            )
+        assert 'biasAda_Bias' in policyType
+    else:
+        post_policy = None
+
 
     
     algo = algoClass(
         env=env,
         policy=policy,
-        load_policy = load_policy,
         baseline=baseline,
+        post_policy = post_policy,
+
+        load_policy = load_policy,
         batch_size=fast_batch_size,  # number of trajs for alpha grad update
         max_path_length=max_path_length,
         meta_batch_size=meta_batch_size,  # number of tasks sampled for beta grad update

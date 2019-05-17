@@ -46,7 +46,7 @@ class GaussianMLPPolicy(StochasticPolicy, Serializable):
             std_network=None,
             std_parametrization='exp',
             std_modifier = 1.0,
-            extra_input_dim=0,
+            latent_dim=0,
     ):
         """
         :param env_spec:
@@ -70,88 +70,79 @@ class GaussianMLPPolicy(StochasticPolicy, Serializable):
         Serializable.quick_init(self, locals())
         assert isinstance(env_spec.action_space, Box)
 
-        obs_dim = env_spec.observation_space.flat_dim
+        obs_dim = env_spec.observation_space.flat_dim + latent_dim
         action_dim = env_spec.action_space.flat_dim
 
         # create network
-        if mean_network is None:
-            self.mean_params = mean_params = self.create_MLP(
-                name="mean_network",
-                input_shape=(None, obs_dim + extra_input_dim,),
-                output_dim=action_dim,
-                hidden_sizes=hidden_sizes,
-            )
-            self.input_tensor, mean_tensor = self.forward_MLP('mean_network', mean_params, n_hidden=len(hidden_sizes),
-                input_shape=(obs_dim,),
-                hidden_nonlinearity=hidden_nonlinearity,
-                output_nonlinearity=output_nonlinearity,
-                reuse=None # Needed for batch norm
-            )
-            # if you want to input your own thing.
-            self._forward_mean = lambda x, is_train: self.forward_MLP('mean_network', mean_params, n_hidden=len(hidden_sizes),
-                hidden_nonlinearity=hidden_nonlinearity, output_nonlinearity=output_nonlinearity, input_tensor=x, is_training=is_train)[1]
-        else:
-            raise NotImplementedError('Chelsea does not support this.')
-
-        if std_network is not None:
-            raise NotImplementedError('Minimal Gaussian MLP does not support this.')
-        else:
-            if adaptive_std:
-                # NOTE - this branch isn't tested
-                raise NotImplementedError('Minimal Gaussian MLP doesnt have a tested version of this.')
-                self.std_params = std_params = self.create_MLP(
-                    name="std_network",
+        with tf.variable_scope(name):
+            if mean_network is None:
+                self.all_params = mean_params = self.create_MLP(
+                    name="mean_network",
                     input_shape=(None, obs_dim,),
                     output_dim=action_dim,
-                    hidden_sizes=std_hidden_sizes,
+                    hidden_sizes=hidden_sizes,
+                )
+                self.input_tensor, mean_tensor = self.forward_MLP('mean_network', mean_params, n_hidden=len(hidden_sizes),
+                    input_shape=(obs_dim,),
+                    hidden_nonlinearity=hidden_nonlinearity,
+                    output_nonlinearity=output_nonlinearity,
+                    reuse=None # Needed for batch norm
                 )
                 # if you want to input your own thing.
-                self._forward_std = lambda x: self.forward_MLP('std_network', std_params, n_hidden=len(hidden_sizes),
-                                                                  hidden_nonlinearity=std_hidden_nonlinearity,
-                                                                output_nonlinearity=tf.identity,
-                                                                input_tensor=x)[1]
+                self._forward_mean = lambda x, is_train: self.forward_MLP('mean_network', mean_params, n_hidden=len(hidden_sizes),
+                    hidden_nonlinearity=hidden_nonlinearity, output_nonlinearity=output_nonlinearity, input_tensor=x, is_training=is_train)[1]
             else:
-                if std_parametrization == 'exp':
-                    init_std_param = np.log(init_std)
-                elif std_parametrization == 'softplus':
-                    init_std_param = np.log(np.exp(init_std) - 1)
+                raise NotImplementedError('Chelsea does not support this.')
+
+            if std_network is not None:
+                raise NotImplementedError('Minimal Gaussian MLP does not support this.')
+            else:
+                if adaptive_std:
+                    # NOTE - this branch isn't tested
+                    raise NotImplementedError('Minimal Gaussian MLP doesnt have a tested version of this.')
+                    
                 else:
-                    raise NotImplementedError
-                self.std_params = make_param_layer(
-                    num_units=action_dim,
-                    param=tf.constant_initializer(init_std_param),
-                    name="output_std_param",
-                    trainable=learn_std,
-                )
-                self._forward_std = lambda x: forward_param_layer(x, self.std_params)
+                    if std_parametrization == 'exp':
+                        init_std_param = np.log(init_std)
+                    elif std_parametrization == 'softplus':
+                        init_std_param = np.log(np.exp(init_std) - 1)
+                    else:
+                        raise NotImplementedError
+                    self.all_params['std_param'] = std_params =  make_param_layer(
+                        num_units=action_dim,
+                        param=tf.constant_initializer(init_std_param),
+                        name="output_std_param",
+                        trainable=learn_std,
+                    )
+                    self._forward_std = lambda x: forward_param_layer(x, std_params)
 
-        self.std_parametrization = std_parametrization
+            self.std_parametrization = std_parametrization
 
-        if std_parametrization == 'exp':
-            min_std_param = np.log(min_std)
-        elif std_parametrization == 'softplus':
-            min_std_param = np.log(np.exp(min_std) - 1)
-        else:
-            raise NotImplementedError
+            if std_parametrization == 'exp':
+                min_std_param = np.log(min_std)
+            elif std_parametrization == 'softplus':
+                min_std_param = np.log(np.exp(min_std) - 1)
+            else:
+                raise NotImplementedError
 
-        self.min_std_param = min_std_param
-        self.std_modifier = std_modifier
+            self.min_std_param = min_std_param
+            self.std_modifier = std_modifier
 
-        self._dist = DiagonalGaussian(action_dim)
+            self._dist = DiagonalGaussian(action_dim)
 
-        self._cached_params = {}
+            self._cached_params = {}
 
-        super(GaussianMLPPolicy, self).__init__(env_spec)
+            super(GaussianMLPPolicy, self).__init__(env_spec)
 
-        dist_info_sym = self.dist_info_sym(self.input_tensor, dict(), is_training=False)
-        mean_var = dist_info_sym["mean"]
-        log_std_var = dist_info_sym["log_std"]
+            dist_info_sym = self.dist_info_sym(self.input_tensor, dict(), is_training=False)
+            mean_var = dist_info_sym["mean"]
+            log_std_var = dist_info_sym["log_std"]
 
-        self._init_f_dist = tensor_utils.compile_function(
-            inputs=[self.input_tensor],
-            outputs=[mean_var, log_std_var],
-        )
-        self._cur_f_dist = self._init_f_dist
+            self._init_f_dist = tensor_utils.compile_function(
+                inputs=[self.input_tensor],
+                outputs=[mean_var, log_std_var],
+            )
+            self._cur_f_dist = self._init_f_dist
     @property
     def vectorized(self):
         return True

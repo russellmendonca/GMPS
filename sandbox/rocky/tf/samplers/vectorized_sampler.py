@@ -10,7 +10,7 @@ from rllab.sampler.stateful_pool import ProgBarCounter
 from sandbox.rocky.tf.envs.vec_env_executor import VecEnvExecutor
 ##from rllab.sampler.utils import joblib_dump_safe
 from rllab.misc import special
-
+import time
 
 class VectorizedSampler(BaseSampler):
 
@@ -44,56 +44,12 @@ class VectorizedSampler(BaseSampler):
         self.vec_env.terminate()
 
 
-    def obtain_samples(self, itr, reset_args=None, return_dict=False, log_prefix='', extra_input=None, extra_input_dim=None, preupdate=False, save_img_obs=False):
+    def obtain_samples(self, itr, reset_args=None, return_dict=False, log_prefix='',  preupdate=False, save_img_obs=False, contexts = None):
         # reset_args: arguments to pass to the environments to reset
         # return_dict: whether or not to return a dictionary or list form of paths
 
         logger.log("Obtaining samples for iteration %d..." % itr)
 
-        if extra_input is not None:
-            if extra_input == "onehot_exploration":
-                if preupdate:
-                    print("debug, using extra_input onehot")
-                    def expand_obs(obses, path_nums):
-                        extra = [special.to_onehot(path_num % extra_input_dim, extra_input_dim) for path_num in path_nums]
-                        return np.concatenate((obses, extra), axis=1)
-                else:
-                    print("debug, using extra_input zeros")
-                    def expand_obs(obses, path_nums):
-                        extra = [np.zeros(extra_input_dim) for path_num in path_nums]
-                        return np.concatenate((obses, extra),axis=1)
-            elif extra_input == "onehot_hacked":
-                if preupdate:
-                    print("debug, using extra_input onehot")
-                    def expand_obs(obses, path_nums):
-                        extra = [special.to_onehot(3, extra_input_dim) for path_num in path_nums]
-                        return np.concatenate((obses, extra), axis=1)
-                else:
-                    print("debug, using extra_input zeros")
-                    def expand_obs(obses, path_nums):
-                        extra = [np.zeros(extra_input_dim) for path_num in path_nums]
-                        return np.concatenate((obses, extra),axis=1)
-            elif extra_input == "gaussian_exploration":
-                if preupdate:
-                    print("debug, using extra_input gaussian")
-
-                    def expand_obs(obses, path_nums):
-                        extra = [np.random.normal(0.,1.,size=(extra_input_dim,)) for path_num in path_nums]
-                        return np.concatenate((obses, extra), axis=1)
-                else:
-                    print("debug, using extra_input zeros")
-                    def expand_obs(obses, path_nums):
-                        extra = [np.zeros(extra_input_dim) for path_num in path_nums]
-                        return np.concatenate((obses, extra), axis=1)
-
-
-            else:
-                def expand_obs(obses, path_nums):
-                    return obses
-        else:
-            def expand_obs(obses, path_nums):
-                return obses
-        #paths = []
         paths = {}
         for i in range(self.vec_env.num_envs):
             paths[i] = []
@@ -108,7 +64,8 @@ class VectorizedSampler(BaseSampler):
         n_samples = 0
         path_nums = [0] * self.vec_env.num_envs # keeps track on which rollout we are for each environment instance
         obses = self.vec_env.reset(reset_args)
-        obses = expand_obs(obses, path_nums)
+        if contexts:
+            obses = np.concatenate([obses, contexts], axis = 1)
         dones = np.asarray([True] * self.vec_env.num_envs)
         running_paths = [None] * self.vec_env.num_envs
 
@@ -117,8 +74,10 @@ class VectorizedSampler(BaseSampler):
         env_time = 0
         process_time = 0
 
-        policy = self.algo.policy
-        import time
+        if contexts:
+            policy = self.algo.post_policy
+        else:
+            policy = self.algo.policy
 
         while n_samples < self.batch_size:
             t = time.time()
@@ -128,7 +87,8 @@ class VectorizedSampler(BaseSampler):
             policy_time += time.time() - t
             t = time.time()
             next_obses, rewards, dones, env_infos = self.vec_env.step(actions, reset_args)   # TODO: instead of receive obs from env, we'll receive it from the policy as a feed_dict
-            next_obses = expand_obs(next_obses,path_nums)
+            if contexts:
+                next_obses = np.concatenate([next_obses, contexts], axis = 1)
             env_time += time.time() - t
 
             t = time.time()

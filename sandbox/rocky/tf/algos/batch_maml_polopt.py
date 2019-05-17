@@ -35,6 +35,7 @@ class BatchMAMLPolopt(RLAlgorithm):
             env,
             policy,
             baseline,
+            post_policy =  None,
             metalearn_baseline=False,
             scope=None,
             n_itr=500,
@@ -105,6 +106,8 @@ class BatchMAMLPolopt(RLAlgorithm):
         self.seed=seed
         self.env = env
         self.policy = policy
+        self.post_policy = post_policy
+
         self.load_policy = load_policy
         self.baseline = baseline
         self.metalearn_baseline = metalearn_baseline
@@ -151,6 +154,8 @@ class BatchMAMLPolopt(RLAlgorithm):
         self.cached_demos_path=None
         # Next, we will set up the goals and potentially trajectories that we plan to use.
         # If we use trajectorie
+        self.num_tasks = self.meta_batch_size
+        self.contexts = None
 
         assert goals_to_load is None, "deprecated"
 
@@ -208,9 +213,6 @@ class BatchMAMLPolopt(RLAlgorithm):
             logger.log("Saving goals pool to %s..." % goals_pickle_to)
             joblib_dump_safe(dict(goals_pool=self.goals_pool, idxs_dict=self.goals_idxs_for_itr_dict), goals_pickle_to)
 
-
-
-
         if sampler_cls is None:
             if singleton_pool.n_parallel > 1:
                 sampler_cls = BatchSampler
@@ -227,22 +229,22 @@ class BatchMAMLPolopt(RLAlgorithm):
 
     def start_worker(self):
         self.sampler.start_worker()
-        if self.plot:
-            plotter.init_plot(self.env, self.policy)
-
+      
     def shutdown_worker(self):
         self.sampler.shutdown_worker()
 
-    def obtain_samples(self, itr, reset_args=None, log_prefix='',testitr=False, preupdate=False):
+    def obtain_samples(self, itr, reset_args=None, log_prefix='',testitr=False, preupdate=False, contexts = None):
         # This obtains samples using self.policy, and calling policy.get_actions(obses)
         # return_dict specifies how the samples should be returned (dict separates samples
         # by task)
-        paths = self.sampler.obtain_samples(itr=itr, reset_args=reset_args, return_dict=True, log_prefix=log_prefix, extra_input=self.extra_input, extra_input_dim=(self.extra_input_dim if self.extra_input is not None else 0), preupdate=preupdate)
+
+        paths = self.sampler.obtain_samples(itr=itr, reset_args=reset_args, return_dict=True, log_prefix=log_prefix, \
+                                preupdate=preupdate , contexts = contexts)
         assert type(paths) == dict
         return paths
 
     def load_expert_traces(self):
-        self.num_tasks = self.meta_batch_size
+       
         self.expert_traces = {taskidx : joblib.load(self.expert_trajs_dir+str(taskidx)+".pkl") for taskidx in range(self.num_tasks)}
         for taskidx in range(self.num_tasks):
             for path in self.expert_traces[taskidx]:
@@ -299,10 +301,13 @@ class BatchMAMLPolopt(RLAlgorithm):
                    
 
                     expert_traj_for_metaitr =  {newIdx  : self.expert_traces[oldIdx][:self.limit_demos_num] for newIdx , oldIdx in enumerate(self.goals_idxs_for_itr_dict[itr])}
-                    
-                   
+                 
                     self.policy.std_modifier = self.pre_std_modifier
                     self.policy.switch_to_init_dist()  # Switch to pre-update policy
+
+                    print(sess.run(self.policy.all_params['bias_transformation']))
+
+                    
                     if itr in self.testing_itrs:
                         env = self.env
                         while 'sample_goals' not in dir(env):
@@ -329,7 +334,7 @@ class BatchMAMLPolopt(RLAlgorithm):
                         elif itr in self.testing_itrs:
                             
                             paths = self.obtain_samples(itr=itr, reset_args=goals_to_use,
-                                                                log_prefix=str(step),testitr=True,preupdate=False)
+                                                                log_prefix=str(step),testitr=True,preupdate=False , contexts = self.contexts)
 
                         else:
                             paths = expert_traj_for_metaitr
@@ -372,7 +377,22 @@ class BatchMAMLPolopt(RLAlgorithm):
                             if (itr in self.testing_itrs or not self.use_maml_il or step<num_inner_updates-1) and step < num_inner_updates:
                                 # do not update on last grad step, and do not update on second to last step when training MAMLIL
                                 logger.log("Computing policy updates...")
-                                self.policy.compute_updated_dists(samples=samples_data)
+                                if self.post_policy:
+                                    #self.contexts = np.sign(self.policy.compute_updated_dists(samples = samples_data , get_contexts = True)).tolist()
+                                    self.contexts = self.policy.compute_updated_dists(samples = samples_data , get_contexts = True)
+
+                                    print('############# CONTEXTS ##########################')
+                                    for i in self.contexts:
+                                        print(i)
+                                    print('##################################################')
+
+                                    #contexts = [[-1,-1,-1,-1] , [1,1,1,1], [-1,-1,-1,-1] , [1,1,1,1]]
+                                    #self.contexts = [[.1], [-.1], [-.1], [.1]]
+                                    #self.contexts = 1e-1*np.random.normal(size = (4,1)) + np.array(contexts) 
+                                    #self.contexts = self.contexts.tolist()
+                                    #self.contexts = contexts
+                                else:
+                                    self.policy.compute_updated_dists(samples=samples_data)
 
                     logger.log("Optimizing policy...")
                     # This needs to take all samples_data so that it can construct graph for meta-optimization.
