@@ -38,7 +38,7 @@ class MAMLIL(BatchMAMLPolopt):
         self.use_maml = use_maml
         self.l2loss_std_multiplier = l2loss_std_mult
         self.ism = importance_sampling_modifier
-        self.old_start_il_loss = None
+        #self.old_start_il_loss = None
 
         if "extra_input" in kwargs.keys():
             self.extra_input = kwargs["extra_input"]
@@ -85,14 +85,6 @@ class MAMLIL(BatchMAMLPolopt):
 
         dist = self.policy.distribution
 
-        old_dist_info_vars, old_dist_info_vars_list = [], []
-        for i in range(self.meta_batch_size):
-            old_dist_info_vars.append({
-                k: tf.placeholder(tf.float32, shape=[None] + list(shape), name='old_%s_%s' % (i, k))
-                for k, shape in dist.dist_info_specs
-                })
-            old_dist_info_vars_list += [old_dist_info_vars[i][k] for k in dist.dist_info_keys]
-
         theta0_dist_info_vars, theta0_dist_info_vars_list = [], []
         for i in range(self.meta_batch_size):
             theta0_dist_info_vars.append({
@@ -101,25 +93,11 @@ class MAMLIL(BatchMAMLPolopt):
                 })
             theta0_dist_info_vars_list += [theta0_dist_info_vars[i][k] for k in dist.dist_info_keys]
 
-        theta_l_dist_info_vars, theta_l_dist_info_vars_list = [], []  #theta_l is the current beta step's pre-inner grad update params
-        for i in range(self.meta_batch_size):
-            theta_l_dist_info_vars.append({
-                k: tf.placeholder(tf.float32, shape=[None] + list(shape), name='theta_l_%s_%s' % (i, k))
-                for k, shape in dist.dist_info_specs
-                })
-            theta_l_dist_info_vars_list += [theta_l_dist_info_vars[i][k] for k in dist.dist_info_keys]
-
-
         state_info_vars, state_info_vars_list = {}, []  # TODO: is this needed?
 
         all_surr_objs, all_surr_objs_slow, input_vars_list, inner_input_vars_list = [], [], [], []
         new_params = []
-        old_logli_sym = []
-        old_lr = []
-        old_adv = []
-        old_action_vars = []
-        old_obs_vars = []
-        input_vars_list += tuple(theta0_dist_info_vars_list) + tuple(theta_l_dist_info_vars_list)
+        input_vars_list += tuple(theta0_dist_info_vars_list)
         #inner_input_vars_list += tuple(theta0_dist_info_vars_list) + tuple(theta_l_dist_info_vars_list)
 
         for grad_step in range(self.num_grad_updates):  # we are doing this for all but the last step
@@ -128,11 +106,6 @@ class MAMLIL(BatchMAMLPolopt):
             inner_surr_objs, inner_surr_objs_simple, inner_surr_objs_sym = [], [], []  # surrogate objectives
            
             new_params = []
-            old_logli_sym.append([])
-            old_lr.append([])
-            old_adv.append([])
-            old_action_vars.append([])
-            old_obs_vars.append([])
 
             for i in range(self.meta_batch_size):  # for training task T_i
                 adv = adv_vars[i]
@@ -146,12 +119,6 @@ class MAMLIL(BatchMAMLPolopt):
                 lr_per_step_fast = dist.likelihood_ratio_sym(action_vars[i], theta0_dist_info_vars[i], dist_info_sym_i_circle)
                 lr_per_step_fast = self.ism(lr_per_step_fast)
 
-                old_logli_sym[-1].append(logli_i)
-                old_lr[-1].append(lr_per_step_fast)
-                old_adv[-1].append(adv)
-                
-                old_action_vars[-1].append(action_vars[i])
-                old_obs_vars[-1].append(obs_vars[i])
                 # formulate a minimization problem
                 # The gradient of the surrogate objective is the policy gradient
                 
@@ -170,9 +137,7 @@ class MAMLIL(BatchMAMLPolopt):
         # LAST INNER GRAD STEP
         obs_vars, action_vars, _, expert_action_vars = self.make_vars('test')  # adv_vars was here instead of _
         
-        outer_surr_objs = []
-        biases = []
-        debugVals = [1,-1,-1,1]
+        outer_surr_objs = [] ; biases = []
         for i in range(self.meta_batch_size):  # here we cycle through the last grad update but for validation tasks (i is the index of a task)
             
 
@@ -182,18 +147,14 @@ class MAMLIL(BatchMAMLPolopt):
                 bs = tf.shape(obs_vars[i])[0]
                 
                 bias = updated_params_i['bias_transformation']
-                #bias = debugVals[i]*tf.ones((1,))
-
-                #bias = tf.sign(bias)
                 biases.append(bias)
                 tiled_bias = tf.tile(bias[None, :], (bs,1)) + 1e-1*tf.random_normal((bs, 2))
                 #tiled_bias = tf.tile(bias[None, :], (bs,1))
                 
                 contextual_obs = tf.concat([obs_vars[i], tiled_bias], axis=1)
                 dist_info_sym_i = self.post_policy.dist_info_sym(contextual_obs)
-           
                
-            self.biases = biases
+                self.biases = biases
             #updated_params.append(updated_params_i)
             # # here we define the loss for meta-gradient
             a_star = expert_action_vars[i]
@@ -202,15 +163,10 @@ class MAMLIL(BatchMAMLPolopt):
             outer_surr_obj = tf.reduce_mean(m**2 - 2*m*a_star+a_star**2+self.l2loss_std_multiplier*(tf.square(tf.exp(s))))
             outer_surr_objs.append(outer_surr_obj)
 
-       
-
         outer_surr_obj = tf.reduce_mean(tf.stack(outer_surr_objs, 0)) # mean over all the different tasks
-
-        input_vars_list += obs_vars + action_vars + expert_action_vars + old_dist_info_vars_list  # +adv_vars # TODO: kill action_vars from this list, and if we're not doing kl, kill old_dist_info_vars_list too
-
+        input_vars_list += obs_vars + action_vars + expert_action_vars 
         target = [self.policy.all_params[key] for key in self.policy.all_params.keys()]
 
-       
         if self.post_policy:
             bias_contraint = tf.reduce_mean((biases[0] - biases[2])**2 + (biases[1] - biases[3])**2)
             outer_surr_obj+=10*bias_contraint
@@ -244,12 +200,6 @@ class MAMLIL(BatchMAMLPolopt):
             theta0_dist_info_list += [agent_infos_orig[k] for k in self.policy.distribution.dist_info_keys]
         input_vals_list += tuple(theta0_dist_info_list)
 
-        theta_l_dist_info_list = []
-        for i in range(self.meta_batch_size):
-            agent_infos = all_samples_data[0][i]['agent_infos']
-            theta_l_dist_info_list += [agent_infos[k] for k in self.policy.distribution.dist_info_keys]
-        input_vals_list += tuple(theta_l_dist_info_list)
-
         for step in range(self.num_grad_updates):
             obs_list, action_list, adv_list, rewards_list, returns_list, path_lengths_list, expert_action_list = [], [], [], [], [], [], []
             for i in range(self.meta_batch_size):  # for each task
@@ -279,20 +229,13 @@ class MAMLIL(BatchMAMLPolopt):
 
             input_vals_list += obs_list + action_list + expert_action_list
 
-        # Code to compute the kl distance, kind of pointless on non-testing iterations as agent_infos are zeroed out on expert traj samples
-        dist_info_list = []
-        for i in range(self.meta_batch_size):
-            # agent_infos = {x:all_samples_data[self.kl_constrain_step][i]['agent_infos'][x] for x in ['mean','log_std']}  ##kl_constrain_step default is -1, meaning post all alpha grad updates
-            agent_infos = all_samples_data[-1][i]['agent_infos']  ##kl_constrain_step default is -1, meaning post all alpha grad updates
-            dist_info_list += [agent_infos[k] for k in self.policy.distribution.dist_info_keys]
-        input_vals_list += tuple(dist_info_list)  # This populates old_dist_info_vars_list
 
         logger.log("Computing loss before")
        # loss_before = self.optimizer.loss(input_vals_list)
         if itr not in TESTING_ITRS:
             steps = self.adam_curve[min(itr,len(self.adam_curve)-1)]
             logger.log("Optimizing using %s Adam steps on itr %s" % (steps, itr))
-            start_loss = self.optimizer.optimize(input_vals_list, steps=steps , latent = self.biases)
+            start_loss = self.optimizer.optimize(input_vals_list, steps=steps )
             # self.optimizer.optimize(input_vals_list)
             return start_loss
 

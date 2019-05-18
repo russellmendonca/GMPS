@@ -87,7 +87,7 @@ class QuadDistExpertOptimizer(Serializable):
                 uninit_vars.append(var)
         sess.run(tf.variables_initializer(uninit_vars))
 
-    def optimize(self, input_vals_list, steps=None , latent = None):
+    def optimize(self, input_vals_list, steps=None):
         if steps is None:
             steps = self._optimizer_steps
         sess = tf.get_default_session()
@@ -98,7 +98,6 @@ class QuadDistExpertOptimizer(Serializable):
         min_loss = adam_loss
         for i in range(steps):
 
-            # print(np.array(sess.run(latent , feed_dict = feed_dict)))
             _, adam_loss = sess.run([self._train_step , self._loss], feed_dict=feed_dict)
             if i%50 == 0:
                logger.log("imitation_loss %s" % adam_loss)
