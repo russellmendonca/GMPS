@@ -92,7 +92,6 @@ class QuadDistExpertOptimizer(Serializable):
             steps = self._optimizer_steps
         sess = tf.get_default_session()
         feed_dict = dict(list(zip(self._inputs, input_vals_list)))
-       
         adam_loss = sess.run(self._loss, feed_dict=feed_dict)
         logger.log("imitation_loss %s" % adam_loss)
         min_loss = adam_loss
@@ -103,7 +102,6 @@ class QuadDistExpertOptimizer(Serializable):
                logger.log("imitation_loss %s" % adam_loss)
         logger.record_tabular("ILLoss", adam_loss)
         return adam_loss
-
 
     def reset_optimizer(self):
         sess=tf.get_default_session()

@@ -17,6 +17,10 @@ from sandbox.rocky.tf.policies.maml_minimal_gauss_mlp_policy_biasonlyadaptiveste
 from sandbox.rocky.tf.policies.maml_minimal_conv_gauss_mlp_policy import MAMLGaussianMLPPolicy as conv_mamlPolicy
 #from sandbox.rocky.tf.policies.maesn_minimal_gauss_mlp_policy import MAMLGaussianMLPPolicy as maesn_policy
 #from sandbox.rocky.tf.policies.maml_minimal_conv_gauss_mlp_policy import MAMLGaussianMLPPolicy as basic_conv_policy
+from sandbox.rocky.tf.policies.maesn_biasonlyadaptivestep import MAMLGaussianMLPPolicy as maesn_policy
+
+
+
 
 from sandbox.rocky.tf.optimizers.quad_dist_expert_optimizer import QuadDistExpertOptimizer
 from sandbox.rocky.tf.optimizers.first_order_optimizer import FirstOrderOptimizer
@@ -133,7 +137,7 @@ def experiment(variant):
             obs_keys = ['img_observation']
         else:
             obs_keys = ['state_observation']
-        env = TfEnv(NormalizedBoxEnv( FinnMamlEnv(FlatGoalEnv(baseEnv, obs_keys=obs_keys) , reset_mode = 'task')))    
+        env = TfEnv(NormalizedBoxEnv( FinnMamlEnv(FlatGoalEnv(baseEnv, obs_keys=obs_keys))))    
 
     algoClass = MAMLIL
     baseline = LinearFeatureBaseline(env_spec = env.spec)
@@ -148,6 +152,20 @@ def experiment(variant):
         load_policy = variant['load_policy']
         if 'conv' in load_policy:
             baseline = ZeroBaseline(env_spec=env.spec)
+
+
+    elif 'maesn' in policyType:
+
+        policy = maesn_policy(
+                name="policy",
+                env_spec=env.spec,
+                grad_step_size=init_flr,
+                hidden_nonlinearity=tf.nn.relu,
+                hidden_sizes=hidden_sizes,
+                #init_flr_full=init_flr,
+                latent_dim=ldim,
+                use_prob_latents = 'prob' in policyType
+            )
 
     elif 'fullAda_Bias' in policyType:
        
@@ -253,7 +271,7 @@ def experiment(variant):
         plotDirPrefix = None,
         latent_dim = ldim,
         dagger = dagger , 
-        expert_policy_loc = expert_policy_loc
+        expert_policy_loc = expert_policy_loc,
     )
     
     algo.train()

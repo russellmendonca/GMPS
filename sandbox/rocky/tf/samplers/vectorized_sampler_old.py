@@ -1,25 +1,27 @@
+import itertools
 import pickle
 
-import tensorflow as tf
-from rllab.sampler.base import BaseSampler
-from sandbox.rocky.tf.envs.parallel_vec_env_executor import ParallelVecEnvExecutor
-from sandbox.rocky.tf.envs.vec_env_executor import VecEnvExecutor
-from rllab.misc import tensor_utils
 import numpy as np
-from rllab.sampler.stateful_pool import ProgBarCounter
-import rllab.misc.logger as logger
-import itertools
 
+import rllab.misc.logger as logger
+from rllab.misc import tensor_utils
+from rllab.sampler.base import BaseSampler
+from rllab.sampler.stateful_pool import ProgBarCounter
+from sandbox.rocky.tf.envs.vec_env_executor import VecEnvExecutor
+##from rllab.sampler.utils import joblib_dump_safe
+from rllab.misc import special
+import time
 
 class VectorizedSampler(BaseSampler):
 
-    def __init__(self, algo, n_envs=None):
+    def __init__(self, algo, n_envs=None, batch_size=None):
         super(VectorizedSampler, self).__init__(algo)
         self.n_envs = n_envs
-        self.latent_dim = self.algo.policy.latent_dim
-        self.use_prob_latents = self.algo.policy.use_prob_latents
-
-
+        # if batch_size is not None:
+        #     self.batch_size = batch_size
+        # else:
+        self.batch_size = self.algo.batch_size
+        print("vectorized sampler initiated")
     def start_worker(self):
         n_envs = self.n_envs
         if n_envs is None:
@@ -42,52 +44,51 @@ class VectorizedSampler(BaseSampler):
         self.vec_env.terminate()
 
 
-    def flatten_n(self, xs):
-        xs = np.asarray(xs)
-        return xs.reshape((xs.shape[0], -1))
-
-    def obtain_samples(self, itr, reset_args=None, task_family_idxs=None, return_dict=False,  log_prefix=''):
+    def obtain_samples(self, itr, reset_args=None, return_dict=False, log_prefix='',  preupdate=False, save_img_obs=False, contexts = None):
         # reset_args: arguments to pass to the environments to reset
         # return_dict: whether or not to return a dictionary or list form of paths
 
         logger.log("Obtaining samples for iteration %d..." % itr)
 
-        #paths = []
         paths = {}
         for i in range(self.vec_env.num_envs):
             paths[i] = []
 
         # if the reset args are not list/numpy, we set the same args for each env
-        if reset_args is not None and (type(reset_args) != list and type(reset_args)!=np.ndarray):
+        if reset_args is not None and (type(reset_args) != list and type(reset_args) != np.ndarray):
+            assert False, "debug, should we be using this?"
+            print("WARNING, will vectorize reset_args")
             reset_args = [reset_args]*self.vec_env.num_envs
 
-        n_samples = 0
 
-        if self.use_prob_latents:
-            curr_noises = [np.random.normal(0,1,size=(self.latent_dim,)) for _ in range(self.vec_env.num_envs)]
-        else:
-            curr_noises = [np.zeros(shape=(self.latent_dim,)) for _ in range(self.vec_env.num_envs)]
-        #curr_noises = [np.ones(size = (self.latent_dim)) for _ in range(self.vec_env.num_envs)]
+        n_samples = 0
+        path_nums = [0] * self.vec_env.num_envs # keeps track on which rollout we are for each environment instance
         obses = self.vec_env.reset(reset_args)
+        if contexts:
+            obses = np.concatenate([obses, contexts], axis = 1)
         dones = np.asarray([True] * self.vec_env.num_envs)
         running_paths = [None] * self.vec_env.num_envs
 
-        pbar = ProgBarCounter(self.algo.batch_size)
+        pbar = ProgBarCounter(self.batch_size)
         policy_time = 0
         env_time = 0
         process_time = 0
 
-        policy = self.algo.policy
-        import time
+        if contexts:
+            policy = self.algo.post_policy
+        else:
+            policy = self.algo.policy
 
-        while n_samples < self.algo.batch_size:
+        while n_samples < self.batch_size:
             t = time.time()
-            policy.reset(dones) #TODO: What the hell does this do?
-            actions, agent_infos = policy.get_actions(obses, task_family_idxs, curr_noises)
-
+            policy.reset(dones)
+            actions, agent_infos = policy.get_actions(obses)
+            # print("debug, agent_infos", agent_infos)
             policy_time += time.time() - t
             t = time.time()
-            next_obses, rewards, dones, env_infos = self.vec_env.step(actions, reset_args)
+            next_obses, rewards, dones, env_infos = self.vec_env.step(actions, reset_args)   # TODO: instead of receive obs from env, we'll receive it from the policy as a feed_dict
+            if contexts:
+                next_obses = np.concatenate([next_obses, contexts], axis = 1)
             env_time += time.time() - t
 
             t = time.time()
@@ -98,9 +99,9 @@ class VectorizedSampler(BaseSampler):
                 env_infos = [dict() for _ in range(self.vec_env.num_envs)]
             if agent_infos is None:
                 agent_infos = [dict() for _ in range(self.vec_env.num_envs)]
-            for idx, observation, action, reward, env_info, agent_info, done, noise in zip(itertools.count(), obses, actions,
+            for idx, observation, action, reward, env_info, agent_info, done in zip(itertools.count(), obses, actions,
                                                                                     rewards, env_infos, agent_infos,
-                                                                                    dones, curr_noises):
+                                                                                    dones):
                 if running_paths[idx] is None:
                     running_paths[idx] = dict(
                         observations=[],
@@ -108,41 +109,48 @@ class VectorizedSampler(BaseSampler):
                         rewards=[],
                         env_infos=[],
                         agent_infos=[],
-                        noises=[]
                     )
                 running_paths[idx]["observations"].append(observation)
                 running_paths[idx]["actions"].append(action)
                 running_paths[idx]["rewards"].append(reward)
                 running_paths[idx]["env_infos"].append(env_info)
                 running_paths[idx]["agent_infos"].append(agent_info)
-                running_paths[idx]["noises"].append(noise)
-
                 if done:
                     paths[idx].append(dict(
                         observations=self.env_spec.observation_space.flatten_n(running_paths[idx]["observations"]),
-                        noises=self.flatten_n(running_paths[idx]["noises"]),
                         actions=self.env_spec.action_space.flatten_n(running_paths[idx]["actions"]),
                         rewards=tensor_utils.stack_tensor_list(running_paths[idx]["rewards"]),
                         env_infos=tensor_utils.stack_tensor_dict_list(running_paths[idx]["env_infos"]),
                         agent_infos=tensor_utils.stack_tensor_dict_list(running_paths[idx]["agent_infos"]),
                     ))
-                    n_samples += len(running_paths[idx]["rewards"])
+                    n_samples += len(running_paths[idx]["rewards"])  # TODO: let's also add the incomplete running_paths to paths
                     running_paths[idx] = None
-                    
-                    curr_noises[idx] = np.random.normal(0,1,size=(self.latent_dim,)) if self.use_prob_latents \
-                                        else np.zeros(shape=(self.latent_dim,))
-                    #curr_noises[idx] = np.ones(size=(self.latent_dim))
-                    
-
+                    path_nums[idx] += 1
             process_time += time.time() - t
             pbar.inc(len(obses))
             obses = next_obses
 
+        # adding the incomplete paths
+        # for idx in range(self.vec_env.num_envs):
+        #     if running_paths[idx] is not None:
+        #         paths[idx].append(dict(
+        #             observations=self.env_spec.observation_space.flatten_n(running_paths[idx]["observations"]),
+        #             actions=self.env_spec.action_space.flatten_n(running_paths[idx]["actions"]),
+        #             rewards=tensor_utils.stack_tensor_list(running_paths[idx]["rewards"]),
+        #             env_infos=tensor_utils.stack_tensor_dict_list(running_paths[idx]["env_infos"]),
+        #             agent_infos=tensor_utils.stack_tensor_dict_list(running_paths[idx]["agent_infos"]),
+        #         ))
+
+
         pbar.stop()
 
-        logger.record_tabular(log_prefix+"PolicyExecTime", policy_time)
-        logger.record_tabular(log_prefix+"EnvExecTime", env_time)
-        logger.record_tabular(log_prefix+"ProcessExecTime", process_time)
+
+
+
+
+      #  logger.record_tabular(log_prefix + "PolicyExecTime", policy_time)
+      #  logger.record_tabular(log_prefix + "EnvExecTime", env_time)
+       # logger.record_tabular(log_prefix + "ProcessExecTime", process_time)
 
         if not return_dict:
             flatten_list = lambda l: [item for sublist in l for item in sublist]

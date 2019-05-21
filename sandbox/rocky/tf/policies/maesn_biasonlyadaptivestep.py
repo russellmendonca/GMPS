@@ -50,8 +50,9 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             stop_grad=False,
             latent_dim=4,
             param_deg=0,
-            num_total_tasks=10,
-            trainableLatents = True
+            num_task_families=2,
+            trainableLatents = True, 
+            use_prob_latents = False
     ):
         """
         :param env_spec:
@@ -76,9 +77,10 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         """
         Serializable.quick_init(self, locals())
         assert isinstance(env_spec.action_space, Box)
+        self.use_prob_latents = use_prob_latents
         self.only_latents = param_deg
         self.latent_dim = latent_dim
-        self.num_total_tasks = num_total_tasks
+        self.num_task_families = num_task_families
         obs_dim = env_spec.observation_space.flat_dim
         self.obs_dim = obs_dim
         self.action_dim = env_spec.action_space.flat_dim
@@ -89,6 +91,15 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         self.step_size = grad_step_size
         self.stop_grad = stop_grad
         self.trainableLatents = trainableLatents
+
+        self.fixed_latent_priors = [{'mean' : np.array([[-1, -1]]) , 'log_std' : np.zeros((1, self.latent_dim))},\
+                                    {'mean' : np.array([[ 1,  1]]) , 'log_std' : np.zeros((1, self.latent_dim))}]
+
+        
+        for prior in self.fixed_latent_priors:
+            assert prior['mean'].shape == prior['log_std'].shape == (1,self.latent_dim)
+        assert len(self.fixed_latent_priors) == num_task_families 
+
         if type(self.step_size) == list:
             raise NotImplementedError('removing this since it didnt work well')
 
@@ -99,13 +110,13 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
                 output_dim=self.action_dim,
                 hidden_sizes=hidden_sizes,
                 latent_dim=self.latent_dim,
-                num_total_tasks=num_total_tasks
+                num_task_families=num_task_families
             )
-            self.input_tensor, self.task_idx, self.noise, self.zs, self.output_tensor_tosample = self.forward_MLP('mean_network', self.all_params,
+            self.input_tensor, self.task_family_idx, self.noise, self.zs, self.output_tensor_tosample = self.forward_MLP('mean_network', self.all_params,
                 reuse=None # Need to run this for batch norm
             )
-            forward_mean = lambda x, task_idx, noise, params, is_train: self.forward_MLP('mean_network', params,
-                input_tensor=x, task_idx=task_idx, noise=noise, is_training=is_train)[-1]
+            forward_mean = lambda x, task_family_idx, noise, params, is_train: self.forward_MLP('mean_network', params,
+                input_tensor=x, task_family_idx=task_family_idx, noise=noise, is_training=is_train)[-1]
         else:
             raise NotImplementedError('Not supported.')
 
@@ -131,8 +142,8 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             self.all_param_vals = None
 
             # unify forward mean and forward std into a single function
-            self._forward = lambda obs, task_idx, noise, params, is_train: (
-                    forward_mean(obs, task_idx, noise, params, is_train), forward_std(obs, params))
+            self._forward = lambda obs, task_family_idx, noise, params, is_train: (
+                    forward_mean(obs, task_family_idx, noise, params, is_train), forward_std(obs, params))
 
             self.std_parametrization = std_parametrization
 
@@ -152,13 +163,13 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
 
             super(MAMLGaussianMLPPolicy, self).__init__(env_spec)
 
-            dist_info_sym = self.dist_info_sym(self.input_tensor, self.task_idx, self.noise, dict(), is_training=False)
+            dist_info_sym = self.dist_info_sym(self.input_tensor, self.task_family_idx, self.noise, dict(), is_training=False)
             mean_var = dist_info_sym["mean"]
             log_std_var = dist_info_sym["log_std"]
 
             # pre-update policy
             self._init_f_dist = tensor_utils.compile_function(
-                inputs=[self.input_tensor, self.task_idx, self.noise],
+                inputs=[self.input_tensor, self.task_family_idx, self.noise],
                 outputs=[mean_var, log_std_var],
             )
             self._cur_f_dist = self._init_f_dist
@@ -168,63 +179,66 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
     def vectorized(self):
         return True
 
-    def set_init_surr_obj(self, input_list, surr_objs_tensor, surr_objs_latent_tensor):
+    def set_init_surr_obj(self, input_list, surr_objs_tensor):
         """ Set the surrogate objectives used the update the policy
         """
         self.input_list_for_grad = input_list
         self.surr_objs = surr_objs_tensor
-        self.surr_objs_latent = surr_objs_latent_tensor
 
-    def compute_updated_dists(self, samples, samples_latent, plot=None):
+    def compute_updated_dists(self, samples):
         """ Compute fast gradients once per iteration and pull them out of tensorflow for sampling with the post-update policy.
         """
         start = time.time()
         num_tasks = len(samples)
         # param_keys = self.all_params.keys()
+        update_param_keys = [] ; no_update_param_keys = []
 
-        param_keys = []
-        param_keys_latent = []
-        all_keys = list(self.all_params.keys())
-        all_keys.remove('latent_means_stepsize')
-        all_keys.remove('latent_stds_stepsize')
-
-        for key in all_keys:
-            if 'latent' not in key:
-                param_keys.append(key)
-            else:
-                param_keys_latent.append(key)
-
-
-        update_param_keys = param_keys
-        update_param_keys_latent = param_keys_latent
-
+        for key in self.all_params.keys():
+            if 'stepsize' not in key:
+                if 'latent' in key:
+                    update_param_keys.append(key)
+                else:
+                    no_update_param_keys.append(key)
+       
         sess = tf.get_default_session()
 
+        obs_list, action_list, adv_list, task_family_idx_list        = [], [], [], []
+        adv_list_latent , z_list_latent, task_family_idx_list_latent = [], [], []
+            
+        
 
-        obs_list, action_list, adv_list, noise_list, task_idx_list = [], [], [], [], []
-        for i in range(num_tasks):
-            inputs = ext.extract(samples[i],
-                    'observations', 'actions', 'advantages', 'noises', 'task_idxs')
-            obs_list.append(inputs[0])
-            action_list.append(inputs[1])
-            adv_list.append(inputs[2])
-            noise_list.append(inputs[3])
-            task_idx_list.append(inputs[4])
+        if self.use_prob_latents:
 
+            for i in range(num_tasks):
 
-        adv_list_latent, zs_list_latent, task_idx_list_latent = [], [], []
-        for i in range(num_tasks):
-            inputs = ext.extract(samples_latent[i],'advantages', 'noises', 'task_idxs')
-            means = tf.gather(self.all_params['latent_means'], inputs[-1])
-            stds = tf.gather(self.all_params['latent_stds'], inputs[-1])
-            zs = sess.run(means + inputs[-2]*tf.exp(stds))
-            adv_list_latent.append(inputs[0])
-            zs_list_latent.append(zs)
-            task_idx_list_latent.append(inputs[2])
+                inputs = ext.extract(
+                    samples[i],
+                    "advantages", "noises", "task_family_idxs"
+                )
+                means = tf.gather(self.all_params['latent_means'], inputs[-1])
+                stds = tf.gather(self.all_params['latent_stds'], inputs[-1])
+                zs = sess.run(means + inputs[-2]*tf.exp(stds))
+                adv_list_latent.append(inputs[0])
+                z_list_latent.append(zs)
+                task_family_idx_list_latent.append(inputs[2])
 
+            inputs = adv_list_latent + z_list_latent + task_family_idx_list_latent
+            
+        else:
 
-        inputs = obs_list + action_list  + adv_list + noise_list + task_idx_list
-        inputs += adv_list_latent + zs_list_latent + task_idx_list_latent
+            for i in range(num_tasks):
+            
+                inputs = ext.extract(
+                    samples[i],
+                    "observations", "actions", "advantages",  "task_family_idxs"
+                )
+                obs_list.append(inputs[0])
+                action_list.append(inputs[1])
+                adv_list.append(inputs[2])
+                task_family_idx_list.append(inputs[3])
+
+            inputs = obs_list + action_list + adv_list + task_family_idx_list 
+
         # To do a second update, replace self.all_params below with the params that were used to collect the policy.
         #TODO: Maybe change?
         init_param_values = None
@@ -237,64 +251,46 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
                 self.assign_params(self.all_params, self.all_param_vals[i])
 
 
-        step_sizes_sym = {}
-        for key in all_keys:
-            step_sizes_sym[key] = step_size
-        step_sizes_sym['latent_means'] = self.all_params['latent_means_stepsize']
-        step_sizes_sym['latent_stds'] = self.all_params['latent_stds_stepsize']
+        step_sizes_sym = {'latent_means' : self.all_params['latent_means_stepsize'] , 
+                         'latent_stds'  : self.all_params['latent_stds_stepsize'] }
 
         if 'all_fast_params_tensor' not in dir(self):
             # make computation graph once
             self.all_fast_params_tensor = []
             for i in range(num_tasks):
-                gradients = dict(zip(update_param_keys, tf.gradients(self.only_latents*self.surr_objs[i], [self.all_params[key] for key in update_param_keys])))
-                gradients_latent = dict(zip(update_param_keys_latent, tf.gradients(self.surr_objs_latent[i], [self.all_params[key] for key in update_param_keys_latent])))
-                gradients.update(gradients_latent)
-                fast_params_tensor = OrderedDict(zip(all_keys, [self.all_params[key] - step_sizes_sym[key]*tf.convert_to_tensor(gradients[key]) for key in all_keys]))
-
+                gradients = dict(zip(update_param_keys, tf.gradients(self.surr_objs[i], [self.all_params[key] for key in update_param_keys])))
+                fast_params_tensor = OrderedDict(zip(update_param_keys, [self.all_params[key] - step_sizes_sym[key]*gradients[key] for key in update_param_keys]))
+                for k in no_update_param_keys:
+                    fast_params_tensor[k] = self.all_params[k]
                 self.all_fast_params_tensor.append(fast_params_tensor)
 
         # pull new param vals out of tensorflow, so gradient computation only done once ## first is the vars, second the values
         # these are the updated values of the params after the gradient step
         self.all_param_vals = sess.run(self.all_fast_params_tensor, feed_dict=dict(list(zip(self.input_list_for_grad, inputs))))
         
-        
-        #PLOTTING CODE
-        if plot!=None:
-            folderName, kl,  itr = plot[0], plot[1], plot[2]
-            lmeans_plot , lstd_plot = [], []
-            for i in range(len(self.all_param_vals)):
-                lmeans_plot.append(self.all_param_vals[i]["latent_means"][i])
-                lstd_plot.append(np.exp(self.all_param_vals[i]["latent_stds"][i]))
-                
-            self.plotLatents(folderName, str(kl), str(itr), "1", lmeans_plot, lstd_plot)   
-                
-
-        outputs = []
-        self._cur_f_dist_i = {}
+     
+        outputs = [] ; self._cur_f_dist_i = {}
         inputs = tf.split(self.input_tensor, num_tasks, 0)
-        task_idxs = tf.split(self.task_idx, num_tasks, 0)
+        task_family_idxs = tf.split(self.task_family_idx, num_tasks, 0)
         noises = tf.split(self.noise, num_tasks, 0)
 
         for i in range(num_tasks):
             # TODO - use a placeholder to feed in the params, so that we don't have to recompile every time.
             task_inp = inputs[i]
-            task_idx_inp = task_idxs[i]
+            task_family_idx_inp = task_family_idxs[i]
             noise_inp = noises[i]
-            info, _ = self.dist_info_sym(task_inp, task_idx_inp, noise_inp, dict(), all_params=self.all_param_vals[i],
+            info, _ = self.dist_info_sym(task_inp, task_family_idx_inp, noise_inp, dict(), all_params=self.all_param_vals[i],
                     is_training=False)
 
             outputs.append([info['mean'], info['log_std']])
 
         self._cur_f_dist = tensor_utils.compile_function(
-            inputs = [self.input_tensor, self.task_idx, self.noise],
+            inputs = [self.input_tensor, self.task_family_idx, self.noise],
             outputs = outputs,
         )
         total_time = time.time() - start
         logger.record_tabular("ComputeUpdatedDistTime", total_time)
-    
- 
-    
+       
     def plotLatents(self, folderName, kl, itr, step, lm, lstd):
     
         from matplotlib import pyplot as plt
@@ -345,7 +341,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
 
     def recompute_dist_for_adjusted_std(self):
 
-        dist_info_sym = self.dist_info_sym(self.input_tensor, self.task_idx, self.noise, dict(), is_training=False)
+        dist_info_sym = self.dist_info_sym(self.input_tensor, self.task_family_idx, self.noise, dict(), is_training=False)
         mean_var = dist_info_sym["mean"]
         log_std_var = dist_info_sym["log_std"]
 
@@ -354,7 +350,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             outputs=[mean_var, log_std_var],
         )
 
-    def dist_info_sym(self, obs_var, task_idx, noise, state_info_vars=None, all_params=None, is_training=True):
+    def dist_info_sym(self, obs_var, task_family_idx, noise, state_info_vars=None, all_params=None, is_training=True):
         # This function constructs the tf graph, only called during beginning of meta-training
         # obs_var - observation tensor
         # mean_var - tensor for policy mean
@@ -364,7 +360,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             return_params=False
             all_params = self.all_params
 
-        mean_var, std_param_var = self._forward(obs_var, task_idx, noise, all_params, is_training)
+        mean_var, std_param_var = self._forward(obs_var, task_family_idx, noise, all_params, is_training)
         if self.min_std_param is not None:
             std_param_var = tf.maximum(std_param_var, self.min_std_param)
 
@@ -379,77 +375,57 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         else:
             return dict(mean=mean_var, log_std=log_std_var)
 
-    def updated_dist_info_sym(self, task_id, surr_obj, surr_obj_latent, new_obs_var, new_task_idx_var, new_noise_var, params_dict=None, params_dict_latent=None, is_training=True):
+    def updated_dist_info_sym(self, task_id, surr_obj,  new_obs_var, new_task_family_idx_var, new_noise_var, params_dict=None, is_training=True):
         """ symbolically create MAML graph, for the meta-optimization, only called at the beginning of meta-training.
         Called more than once if you want to do more than one grad step.
         """
+
         old_params_dict = params_dict
-        old_params_dict_latent = params_dict_latent
 
         step_size = self.step_size
 
-        param_keys = []
-        param_keys_latent = []
+        if old_params_dict == None:
+            old_params_dict = self.all_params
+        # param_keys = self.all_params.keys()
 
-        all_keys = list(self.all_params.keys())
-        all_keys.remove('latent_means_stepsize')
-        all_keys.remove('latent_stds_stepsize')
+        update_param_keys = [] ; no_update_param_keys = []
 
-        for key in all_keys:
-            if 'latent' not in key:
-                param_keys.append(key)
-            else:
-                param_keys_latent.append(key)
+        for key in self.all_params.keys():
+            if 'stepsize' not in key:
+                if 'latent' in key:
+                    update_param_keys.append(key)
+                else:
+                    no_update_param_keys.append(key)
 
-        update_param_keys = param_keys
-        update_param_keys_latent = param_keys_latent
-
-        no_update_param_keys = []
-        no_update_param_keys_latent = []
-
-        unconverted_grads = tf.gradients(surr_obj, [old_params_dict[key] for key in update_param_keys])
-        unconverted_grads_latent = tf.gradients(surr_obj_latent, [old_params_dict_latent[key] for key in update_param_keys_latent])
-        grads = []
-        grads_latent = []
-        for grad in unconverted_grads:
-            if grad is not None:
-                grad = tf.convert_to_tensor(grad)
-            grads.append(grad)
-        for grad in unconverted_grads_latent:
-            if grad is not None:
-                grad = tf.convert_to_tensor(grad)
-            grads_latent.append(grad)
+        grads = tf.gradients(surr_obj, [old_params_dict[key] for key in update_param_keys])
+        if self.stop_grad:
+            grads = [tf.stop_gradient(grad) for grad in grads]
 
         gradients = dict(zip(update_param_keys, grads))
-        gradients_latent = dict(zip(update_param_keys_latent, grads_latent))
-        params_dict = dict(zip(update_param_keys, [old_params_dict[key] - self.only_latents*step_size*gradients[key] for key in update_param_keys]))
-        
-        step_sizes_sym = {}
-        step_sizes_sym['latent_means'] = self.all_params['latent_means_stepsize']
-        step_sizes_sym['latent_stds'] = self.all_params['latent_stds_stepsize']
+        params_dict = dict(zip(update_param_keys, [old_params_dict[key] - self.all_params[key + '_stepsize']*gradients[key] for key in update_param_keys]))
+        for k in no_update_param_keys:
+            params_dict[k] = old_params_dict[k]
 
+        return self.dist_info_sym(new_obs_var, new_task_family_idx_var, new_noise_var, all_params=params_dict, is_training=is_training)
 
-        params_dict_latent = dict(zip(update_param_keys_latent, [old_params_dict_latent[key] - step_sizes_sym[key]*gradients_latent[key] for key in update_param_keys_latent]))
-        params_dict.update(params_dict_latent)
-        return self.dist_info_sym(new_obs_var, new_task_idx_var, new_noise_var, all_params=params_dict, is_training=is_training)
-
+       
 
     @overrides
-    def get_action(self, observation, task_idx, noise, idx=None):
+    def get_action(self, observation, task_family_idx, noise, idx=None):
         # this function takes a numpy array observations and outputs randomly sampled actions.
         # idx: index corresponding to the task/updated policy.
         flat_obs = self.observation_space.flatten(observation)
         f_dist = self._cur_f_dist
-        mean, log_std = [x[0] for x in f_dist([flat_obs], [task_idx], [noise])]
+        mean, log_std = [x[0] for x in f_dist([flat_obs], [task_family_idx], [noise])]
         rnd = np.random.normal(size=mean.shape)
         action = mean + rnd * np.exp(log_std)
         return action, dict(mean=mean, log_std=log_std)
 
-    def get_actions(self, observations, task_idxs, noises):
+    def get_actions(self, observations, task_family_idxs, noises):
         # this function takes a numpy array observations and outputs sampled actions.
         # Assumes that there is one observation per post-update policy distr
         flat_obs = self.observation_space.flatten_n(observations)
-        result = self._cur_f_dist(flat_obs, task_idxs, noises)
+        result = self._cur_f_dist(flat_obs, task_family_idxs, noises)
 
         if len(result) == 2:
             # NOTE - this code assumes that there aren't 2 meta tasks in a batch
@@ -487,7 +463,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         return params
 
     # This makes all of the parameters.
-    def create_MLP(self, name, output_dim, latent_dim, num_total_tasks, hidden_sizes,
+    def create_MLP(self, name, output_dim, latent_dim, num_task_families, hidden_sizes,
                    hidden_W_init=tf_layers.xavier_initializer(), hidden_b_init=tf.zeros_initializer(),
                    output_W_init=tf_layers.xavier_initializer(), output_b_init=tf.zeros_initializer(),
                    weight_normalization=False,
@@ -517,25 +493,32 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             )
             all_params['W' + str(len(hidden_sizes))] = W
             all_params['b'+str(len(hidden_sizes))] = b
-            all_params['latent_means'] = tf.get_variable("latent_means", shape=(num_total_tasks, latent_dim), initializer=tf.random_normal_initializer)
-            all_params['latent_stds'] = tf.get_variable("latent_stds", shape=(num_total_tasks, latent_dim), initializer=tf.zeros_initializer)
+
+            assert num_task_families == 2
+           
+            mean_prior    = tf.constant(np.array([self.fixed_latent_priors[i]['mean'].flatten() for i in range(num_task_families)])    , dtype = tf.float32 )
+            log_std_prior = tf.constant(np.array([self.fixed_latent_priors[i]['log_std'].flatten() for i in range(num_task_families)]) , dtype = tf.float32 )
+
+            all_params['latent_means'] = tf.Variable(mean_prior)
+            all_params['latent_stds']  = tf.Variable(log_std_prior)
+
             all_params['latent_means_stepsize'] = tf.Variable(self.step_size*tf.ones((latent_dim,)), name="latent_means_stepsize")
             all_params['latent_stds_stepsize'] = tf.Variable(self.step_size*tf.ones((latent_dim,)), name="latent_stds_stepsize")
             
         return all_params
 
-    def forward_MLP(self, name, all_params, input_tensor=None, task_idx=None, noise=None,
+    def forward_MLP(self, name, all_params, input_tensor=None, task_family_idx=None, noise=None,
                     batch_normalization=False, reuse=True, is_training=False):
         # is_training and reuse are for batch norm, irrelevant if batch_norm set to False
         # set reuse to False if the first time this func is called.
         with tf.variable_scope(name):
             if input_tensor is None:
                 l_in = make_input(shape=(None, self.obs_dim,), input_var=None, name='input')
-                l_tasks = tf.placeholder(tf.int32, shape=(None,), name="task_idxs")
+                l_tasks = tf.placeholder(tf.int32, shape=(None,), name="task_family_idxs")
                 l_noise = make_input(shape=(None, self.latent_dim), input_var=None, name='noise')
             else:
                 l_in = input_tensor
-                l_tasks = task_idx
+                l_tasks = task_family_idx
                 l_noise = noise
 
             chosen_latent_means = tf.gather(all_params['latent_means'], l_tasks)
