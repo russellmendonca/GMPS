@@ -47,6 +47,7 @@ class BaseSampler(Sampler):
         """
         self.algo = algo
         self.use_prob_latents = self.algo.policy.use_prob_latents
+        self.post_lstd_mod    = self.algo.policy.post_lstd_mod
        
 
     def process_samples(self, itr, paths, prefix='', log=True, task_family_idx = 0 , postUpdate_step=False, testitr=False):
@@ -98,7 +99,7 @@ class BaseSampler(Sampler):
                 #noises = np.zeros((np.shape(observations)[0] , self.latent_dim))
                 mpl = int(observations.shape[0]/len(paths))
                 all_noises = []
-                for path_noise in np.random.normal(0,0.1, size = (len(paths),self.latent_dim)):
+                for path_noise in np.random.normal(0,  self.post_lstd_mod, size = (len(paths),self.latent_dim)):
                     all_noises.append(np.ones((mpl, self.latent_dim))*path_noise)
             
                 noises = np.concatenate(all_noises)

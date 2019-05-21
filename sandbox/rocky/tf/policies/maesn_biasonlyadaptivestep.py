@@ -92,6 +92,8 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         self.stop_grad = stop_grad
         self.trainableLatents = trainableLatents
 
+        self.post_lstd_mod = 0.01
+
         self.fixed_latent_priors = [{'mean' : np.array([[-1, -1]]) , 'log_std' : np.zeros((1, self.latent_dim))},\
                                     {'mean' : np.array([[ 1,  1]]) , 'log_std' : np.zeros((1, self.latent_dim))}]
 
@@ -115,8 +117,8 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             self.input_tensor, self.task_family_idx, self.noise, self.zs, self.output_tensor_tosample = self.forward_MLP('mean_network', self.all_params,
                 reuse=None # Need to run this for batch norm
             )
-            forward_mean = lambda x, task_family_idx, noise, params, is_train: self.forward_MLP('mean_network', params,
-                input_tensor=x, task_family_idx=task_family_idx, noise=noise, is_training=is_train)[-1]
+            forward_mean = lambda x, task_family_idx, noise,  params, l_std_mod, is_train: self.forward_MLP('mean_network', params,
+                input_tensor=x, task_family_idx=task_family_idx, noise=noise, l_std_mod = l_std_mod , is_training=is_train)[-1]
         else:
             raise NotImplementedError('Not supported.')
 
@@ -142,8 +144,8 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             self.all_param_vals = None
 
             # unify forward mean and forward std into a single function
-            self._forward = lambda obs, task_family_idx, noise, params, is_train: (
-                    forward_mean(obs, task_family_idx, noise, params, is_train), forward_std(obs, params))
+            self._forward = lambda obs, task_family_idx, noise,  params, l_std_mod, is_train: (
+                    forward_mean(obs, task_family_idx, noise,  params, l_std_mod, is_train), forward_std(obs, params))
 
             self.std_parametrization = std_parametrization
 
@@ -279,7 +281,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             task_inp = inputs[i]
             task_family_idx_inp = task_family_idxs[i]
             noise_inp = noises[i]
-            info, _ = self.dist_info_sym(task_inp, task_family_idx_inp, noise_inp, dict(), all_params=self.all_param_vals[i],
+            info, _ = self.dist_info_sym(task_inp, task_family_idx_inp, noise_inp, dict(), l_std_mod = self.post_lstd_mod, all_params=self.all_param_vals[i],
                     is_training=False)
 
             outputs.append([info['mean'], info['log_std']])
@@ -350,7 +352,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             outputs=[mean_var, log_std_var],
         )
 
-    def dist_info_sym(self, obs_var, task_family_idx, noise, state_info_vars=None, all_params=None, is_training=True):
+    def dist_info_sym(self, obs_var, task_family_idx, noise, state_info_vars=None, l_std_mod = 1.0,  all_params=None, is_training=True):
         # This function constructs the tf graph, only called during beginning of meta-training
         # obs_var - observation tensor
         # mean_var - tensor for policy mean
@@ -359,8 +361,9 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         if all_params is None:
             return_params=False
             all_params = self.all_params
+        ########## debug mode #####################
 
-        mean_var, std_param_var = self._forward(obs_var, task_family_idx, noise, all_params, is_training)
+        mean_var, std_param_var = self._forward(obs_var, task_family_idx, noise, all_params,  l_std_mod, is_training)
         if self.min_std_param is not None:
             std_param_var = tf.maximum(std_param_var, self.min_std_param)
 
@@ -406,7 +409,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         for k in no_update_param_keys:
             params_dict[k] = old_params_dict[k]
 
-        return self.dist_info_sym(new_obs_var, new_task_family_idx_var, new_noise_var, all_params=params_dict, is_training=is_training)
+        return self.dist_info_sym(new_obs_var, new_task_family_idx_var, new_noise_var, l_std_mod = self.post_lstd_mod, all_params=params_dict, is_training=is_training)
 
        
 
@@ -507,7 +510,7 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
             
         return all_params
 
-    def forward_MLP(self, name, all_params, input_tensor=None, task_family_idx=None, noise=None,
+    def forward_MLP(self, name, all_params, input_tensor=None, task_family_idx=None, noise=None, l_std_mod = 1.0,
                     batch_normalization=False, reuse=True, is_training=False):
         # is_training and reuse are for batch norm, irrelevant if batch_norm set to False
         # set reuse to False if the first time this func is called.
@@ -523,10 +526,10 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
 
             chosen_latent_means = tf.gather(all_params['latent_means'], l_tasks)
             chosen_latent_stds = tf.gather(all_params['latent_stds'], l_tasks)
+          
+            latent_std_modifier = tf.tile( tf.log(l_std_mod)*tf.ones((1, self.latent_dim)) ,  (tf.shape(chosen_latent_stds)[0], 1) ) 
+            chosen_latent_stds += latent_std_modifier
             zs = chosen_latent_means+ l_noise*tf.exp(chosen_latent_stds)
-            
-           
-            
             l_hid = tf.concat([l_in, zs], axis=1)
 
             for idx in range(self.n_hidden):

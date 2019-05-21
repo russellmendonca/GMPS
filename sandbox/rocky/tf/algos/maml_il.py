@@ -177,6 +177,8 @@ class MAMLIL(BatchMAMLPolopt):
                     dist_info_vars_circle, _ = self.policy.dist_info_sym(obs_vars[i], task_family_idx_vars[i], noise_vars, state_info_vars = {}, all_params=theta_circle)
                     
                     lr_per_step_fast = dist.likelihood_ratio_sym(action_vars[i], theta0_dist_info_vars[i], dist_info_vars_circle)
+                    import ipdb
+                    ipdb.set_trace()
                     lr_per_step_fast = self.ism(lr_per_step_fast)
 
                     # formulate a minimization problem
@@ -198,12 +200,13 @@ class MAMLIL(BatchMAMLPolopt):
 
         ###################################Outer loop imitation step ##############################################################################
         obs_vars, action_vars, expert_action_vars , _, noise_vars, task_family_idx_vars = self.make_vars('test')
-        outer_surr_objs = []  ; self.updated_latent_means = []
+        outer_surr_objs = []  ; self.updated_latent_means = [] ; self.updated_latent_stds = []
         for i in range(self.meta_batch_size):  
             
             dist_info_sym_i, updated_params = self.policy.updated_dist_info_sym(i, all_surr_objs[-1][i], obs_vars[i], task_family_idx_vars[i], noise_vars[i], params_dict=new_params[i])
             
             self.updated_latent_means.append(updated_params['latent_means'])
+            self.updated_latent_stds.append(updated_params['latent_stds'])
 
             a_star = expert_action_vars[i]
             s = dist_info_sym_i["log_std"]
@@ -310,7 +313,12 @@ class MAMLIL(BatchMAMLPolopt):
         
         feed_dict = dict(list(zip(self.optimizer._inputs, input_vals_list)))
         updated_latent_means = sess.run(self.updated_latent_means , feed_dict = feed_dict)
+        updated_latent_stds  = np.exp(sess.run(self.updated_latent_stds  , feed_dict = feed_dict))
+        print('############# Means ####################')
         for i in updated_latent_means: print(i)
+        print('############# Stds #####################')
+        for i in updated_latent_stds: print(i)
+
      
         steps = self.adam_curve[min(itr,len(self.adam_curve)-1)]
         logger.log("Optimizing using %s Adam steps on itr %s" % (steps, itr))
