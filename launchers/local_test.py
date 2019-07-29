@@ -85,7 +85,7 @@ def experiment(variant):
             obs_keys = ['img_observation']
         else:
             obs_keys = ['state_observation']
-        env = TfEnv(NormalizedBoxEnv(FinnMamlEnv(FlatGoalEnv(baseEnv, obs_keys=obs_keys), reset_mode='task')))
+        env = TfEnv(NormalizedBoxEnv(FinnMamlEnv(FlatGoalEnv(baseEnv, obs_keys=obs_keys), reset_mode='idx')))
 
 
     baseline = ZeroBaseline(env_spec=env.spec)
