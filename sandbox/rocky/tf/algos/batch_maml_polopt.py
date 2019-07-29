@@ -35,7 +35,6 @@ class BatchMAMLPolopt(RLAlgorithm):
             env,
             policy,
             baseline,
-            post_policy =  None,
             metalearn_baseline=False,
             scope=None,
             n_itr=500,
@@ -106,7 +105,6 @@ class BatchMAMLPolopt(RLAlgorithm):
         self.seed=seed
         self.env = env
         self.policy = policy
-        self.post_policy = post_policy
 
         self.load_policy = load_policy
         self.baseline = baseline
@@ -157,61 +155,19 @@ class BatchMAMLPolopt(RLAlgorithm):
         self.num_tasks = self.meta_batch_size
         self.contexts = None
 
-        assert goals_to_load is None, "deprecated"
+        self.goals_idxs_for_itr_dict = {}
+        for i in range(self.n_itr):
+            self.goals_idxs_for_itr_dict[i] = np.arange(0 , self.meta_batch_size)
 
+        self.demos_path = expert_trajs_dir
 
-        if self.use_pooled_goals:
-            
-            if expert_trajs_dir is not None:
-                assert goals_pool_to_load is None, "expert_trajs already comes with its own goals, please disable goals_pool_to_load"
-              
-                goals_pool = joblib.load(self.expert_trajs_dir+"tasks_pool.pkl")
-
-                self.goals_pool = goals_pool['tasks_pool']
-
-                self.goals_idxs_for_itr_dict = {}
-                for i in range(self.n_itr):
-                    self.goals_idxs_for_itr_dict[i] = np.arange(0 , self.meta_batch_size)
-              
-                self.demos_path = expert_trajs_dir
-                
-            # inspecting the goals pool
-            env = self.env
-            while 'sample_goals' not in dir(env):
-                env = env.wrapped_env
-            reset_dimensions = env.sample_goals(1).shape[1:]
-            dimensions = np.shape(self.goals_pool[self.goals_idxs_for_itr_dict[0][0]])
-           
-            assert reset_dimensions == dimensions, "loaded dimensions are %s, do not match with environment's %s" % (
-            dimensions, reset_dimensions)
-            # inspecting goals_idxs_for_itr_dict
-            assert set(range(self.start_itr, self.n_itr)).issubset(set(self.goals_idxs_for_itr_dict.keys())), \
-                "Not all meta-iteration numbers have idx_dict in %s" % goals_pool_to_load
-            for itr in range(self.start_itr, self.n_itr):
-                num_goals = len(self.goals_idxs_for_itr_dict[itr])
-                assert num_goals >= self.meta_batch_size, "iteration %s contained %s goals when at least %s are needed" % (itr, num_goals, self.meta_batch_size)
-                self.goals_idxs_for_itr_dict[itr] = self.goals_idxs_for_itr_dict[itr][:self.meta_batch_size]
-
-            # we build goals_to_use_dict regardless of how we obtained goals_pool, goals_idx_for_itr_dict
-            self.goals_to_use_dict = {}
-            for itr in range(self.start_itr, self.n_itr):
-                #if itr not in self.testing_itrs or self.test_on_training_goals:
-                self.goals_to_use_dict[itr] = np.array([self.goals_pool[idx] for idx in self.goals_idxs_for_itr_dict[itr]])
-
-          
-        else:  # backwards compatibility code for old-format ETs
-            assert False, "deprecated"
-            # self.goals_to_use_dict = joblib.load(self.expert_trajs_dir+"goals.pkl")
-            # assert set(range(self.start_itr, self.n_itr)).issubset(set(self.goals_to_use_dict.keys())), "Not all meta-iteration numbers have saved goals in %s" % expert_trajs_dir
-            # chopping off unnecessary meta-iterations and goals
-            # self.goals_to_use_dict = {itr:self.goals_to_use_dict[itr][:self.meta_batch_size]
-            #                           for itr in range(self.start_itr,self.n_itr)}
-        # saving goals pool
-        if goals_pickle_to is not None:
-            # logger.log("Saving goals to %s..." % goals_pickle_to)
-            # joblib_dump_safe(self.goals_to_use_dict, goals_pickle_to)
-            logger.log("Saving goals pool to %s..." % goals_pickle_to)
-            joblib_dump_safe(dict(goals_pool=self.goals_pool, idxs_dict=self.goals_idxs_for_itr_dict), goals_pickle_to)
+        # inspecting goals_idxs_for_itr_dict
+        assert set(range(self.start_itr, self.n_itr)).issubset(set(self.goals_idxs_for_itr_dict.keys())), \
+            "Not all meta-iteration numbers have idx_dict in %s" % goals_pool_to_load
+        for itr in range(self.start_itr, self.n_itr):
+            num_goals = len(self.goals_idxs_for_itr_dict[itr])
+            assert num_goals >= self.meta_batch_size, "iteration %s contained %s goals when at least %s are needed" % (itr, num_goals, self.meta_batch_size)
+            self.goals_idxs_for_itr_dict[itr] = self.goals_idxs_for_itr_dict[itr][:self.meta_batch_size]
 
         if sampler_cls is None:
             if singleton_pool.n_parallel > 1:
@@ -267,10 +223,12 @@ class BatchMAMLPolopt(RLAlgorithm):
 
         with tf.Session(config=config) as sess:
         # with tf.Session(config=tf.ConfigProto(device_count={'GPU': 0})) as sess:
-            tf.set_random_seed(1)
+            #tf.set_random_seed(1)
             # Code for loading a previous policy. Somewhat hacky because needs to be in sess.
             if self.load_policy is not None:
-                self.policy = joblib.load(self.load_policy)['policy']
+                loaded_data = joblib.load(self.load_policy)
+                self.policy = loaded_data['policy']
+                self.baseline = loaded_data['baseline']
             self.init_opt()
             # initialize uninitialized vars  (only initialize vars that were not loaded)
             uninit_vars = []
@@ -304,21 +262,16 @@ class BatchMAMLPolopt(RLAlgorithm):
                  
                     self.policy.std_modifier = self.pre_std_modifier
                     self.policy.switch_to_init_dist()  # Switch to pre-update policy
-
-                    print(sess.run(self.policy.all_params['bias_transformation']))
+                    #import ipdb; ipdb.set_trace()
+                    #print(sess.run(self.policy.all_params['bias_transformation']))
 
                     
                     if itr in self.testing_itrs:
                         env = self.env
                         while 'sample_goals' not in dir(env):
                             env = env.wrapped_env
-                        if self.test_on_training_goals:
-                        
-                            goals_to_use = self.goals_to_use_dict[itr]
-                         
-                        else:
-                            goals_to_use = env.sample_goals(self.meta_batch_size)
-                        self.goals_to_use_dict[itr] = goals_to_use 
+
+                        goal_idxs_to_use = self.goals_idxs_for_itr_dict[itr]
                     
                     all_samples_data = []
                     for step in range(num_inner_updates+1): # inner loop
@@ -327,13 +280,13 @@ class BatchMAMLPolopt(RLAlgorithm):
 
                         if step < num_inner_updates:
                             
-                            paths = self.obtain_samples(itr=itr, reset_args=goals_to_use,
+                            paths = self.obtain_samples(itr=itr, reset_args=goal_idxs_to_use,
                                                             log_prefix=str(step),testitr=itr in self.testing_itrs,preupdate=True)
                             paths = store_agent_infos(paths)  # agent_infos_orig is populated here
 
                         elif itr in self.testing_itrs:
                             
-                            paths = self.obtain_samples(itr=itr, reset_args=goals_to_use,
+                            paths = self.obtain_samples(itr=itr, reset_args=goal_idxs_to_use,
                                                                 log_prefix=str(step),testitr=True,preupdate=False , contexts = self.contexts)
 
                         else:
@@ -377,22 +330,7 @@ class BatchMAMLPolopt(RLAlgorithm):
                             if (itr in self.testing_itrs or not self.use_maml_il or step<num_inner_updates-1) and step < num_inner_updates:
                                 # do not update on last grad step, and do not update on second to last step when training MAMLIL
                                 logger.log("Computing policy updates...")
-                                if self.post_policy:
-                                    #self.contexts = np.sign(self.policy.compute_updated_dists(samples = samples_data , get_contexts = True)).tolist()
-                                    self.contexts = self.policy.compute_updated_dists(samples = samples_data , get_contexts = True)
-
-                                    print('############# CONTEXTS ##########################')
-                                    for i in self.contexts:
-                                        print(i)
-                                    print('##################################################')
-
-                                    #contexts = [[-1,-1,-1,-1] , [1,1,1,1], [-1,-1,-1,-1] , [1,1,1,1]]
-                                    #self.contexts = [[.1], [-.1], [-.1], [.1]]
-                                    #self.contexts = 1e-1*np.random.normal(size = (4,1)) + np.array(contexts) 
-                                    #self.contexts = self.contexts.tolist()
-                                    #self.contexts = contexts
-                                else:
-                                    self.policy.compute_updated_dists(samples=samples_data)
+                                self.policy.compute_updated_dists(samples=samples_data)
 
                     logger.log("Optimizing policy...")
                     # This needs to take all samples_data so that it can construct graph for meta-optimization.

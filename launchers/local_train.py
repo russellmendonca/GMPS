@@ -18,7 +18,7 @@ from sandbox.rocky.tf.optimizers.first_order_optimizer import FirstOrderOptimize
 from sandbox.rocky.tf.envs.base import TfEnv
 import sandbox.rocky.tf.core.layers as L
 
-#from rllab.envs.mujoco.ant_env_rand_goal_ring import AntEnvRandGoalRing
+from rllab.envs.mujoco.ant_env_rand_goal_ring import AntEnvRandGoalRing
 from multiworld.envs.mujoco.sawyer_xyz.push.sawyer_push import  SawyerPushEnv 
 from multiworld.envs.mujoco.sawyer_xyz.pickPlace.sawyer_pick_and_place import SawyerPickPlaceEnv
 from multiworld.envs.mujoco.sawyer_xyz.door.sawyer_door_open import  SawyerDoorOpenEnv
@@ -54,18 +54,13 @@ def setup(seed , n_parallel, log_dir ):
         os.makedirs(log_dir , exist_ok = True)
 
     logger.set_snapshot_dir(log_dir)
-    #logger.set_snapshot_gap(20)
-    logger.add_tabular_output(log_dir+'progress.csv')
+    logger.add_tabular_output(log_dir+'/progress.csv')
 
 
 
 expl = False 
 l2loss_std_mult = 0 ; use_corr_term = False
-
-if expl:
-	extra_input = "onehot_exploration" ; extra_input_dim = 5
-else:
-	extra_input =None ; extra_input_dim = 0
+extra_input =None ; extra_input_dim = 0
 
 beta_steps = 1 ;
 meta_step_size = 0.01 ; num_grad_updates = 1
@@ -82,7 +77,6 @@ def experiment(variant):
     setup(seed, n_parallel , log_dir)
 
     fast_batch_size = variant['fbs']  ; meta_batch_size = variant['mbs']
-
     adam_steps = variant['adam_steps'] ; max_path_length = variant['max_path_length']
 
     dagger = variant['dagger'] ; expert_policy_loc = variant['expert_policy_loc']
@@ -91,14 +85,14 @@ def experiment(variant):
     EXPERT_TRAJ_LOCATION = variant['expertDataLoc']
     envType = variant['envType']
 
-    #tasksFile = '/home/code/multiworld/multiworld/envs/goals/' + variant['tasksFile']+'.pkl'
-    tasksFile = '/home/russell/multiworld/multiworld/envs/goals/' + variant['tasksFile']+'.pkl'
+    tasksFile = path_to_multiworld + 'multiworld/envs/goals/' + variant['tasksFile']+'.pkl'
 
     all_tasks = pickle.load(open(tasksFile, 'rb'))
     assert meta_batch_size<=len(all_tasks)
     tasks = all_tasks[:meta_batch_size]
 
     use_images = 'conv' in policyType
+
 
     if 'Push' == envType:       
         baseEnv = SawyerPushEnv(tasks = tasks , image = use_images , mpl = max_path_length)
@@ -127,7 +121,7 @@ def experiment(variant):
             obs_keys = ['img_observation']
         else:
             obs_keys = ['state_observation']
-        env = TfEnv(NormalizedBoxEnv( FinnMamlEnv(FlatGoalEnv(baseEnv, obs_keys=obs_keys) , reset_mode = 'task')))    
+        env = TfEnv(NormalizedBoxEnv( FinnMamlEnv(FlatGoalEnv(baseEnv, obs_keys=obs_keys) , reset_mode = 'idx')))
 
     
     algoClass = MAMLIL
@@ -138,8 +132,8 @@ def experiment(variant):
     if load_policy !=None:
         policy = None
         load_policy = variant['load_policy']
-        if 'conv' in load_policy:
-            baseline = ZeroBaseline(env_spec=env.spec)
+        # if 'conv' in load_policy:
+        #     baseline = ZeroBaseline(env_spec=env.spec)
 
     elif 'fullAda_Bias' in policyType:
        
@@ -203,7 +197,7 @@ def experiment(variant):
         max_path_length=max_path_length,
         meta_batch_size=meta_batch_size,  # number of tasks sampled for beta grad update
         num_grad_updates=num_grad_updates,  # number of alpha grad updates
-        n_itr=25, #100
+        n_itr=1, #100
         make_video=False,
         use_maml=True,
         use_pooled_goals=True,
@@ -235,20 +229,33 @@ def experiment(variant):
     
     algo.train()
 
+########### Example Launcher for Vision Pushing #####################
+path_to_gmps = '/home/russell/gmps/'
+path_to_multiworld = '/home/russell/multiworld/'
+
+# log_dir = '/home/russell/gmps/data/SawyerPush_repl/'
+# envType = 'Push' ; annotation = 'v4-mpl-50-SAC' ; tasksFile = 'sawyer_push/push_v4' ; max_path_length = 50
+#expertDataLoc = path_to_gmps + '/saved_expert_trajs/SAC-pushing/'
+
+log_dir = '/home/russell/gmps/data/Ant_repl/'
+envType = 'Ant' ; annotation = 'debug-40tasks-v2' ; tasksFile = 'rad2_quat_v2' ; max_path_length = 200
+expertDataLoc = path_to_gmps+'/saved_expert_trajs/ant-quat-v2-itr400/'
+
+#policyType = 'conv_fcBiasAda'
+policyType = 'fullAda_Bias'
+
+seed = 0 ; n_parallel = 1
+ldim = 4 ; init_flr = 0.5 ; fbs = 10 ; mbs = 3  ; adamSteps = 500
+
+load_policy = '/home/russell/data/s3/Ant-dense-quat-v2-itr400/mri_rosen/policyType_fullAda_Bias/'+\
+            'ldim_4/adamSteps_500_mbs_40_fbs_50_initFlr_0.5_seed_1/itr_9.pkl'
+#load_policy = '/home/russell/gmps/data/Ant_repl/rep-10tasks-v2/itr_1.pkl'
+#load_policy = None
+#load_policy = None
+#'imgObs-Sawyer-Push-v4-mpl-50-numDemos5/Itr_250/'
 
 
-envType = 'Push' ; annotation = 'v4-mpl-50' ;  tasksFile = 'push_v4' ; max_path_length= 50 
-policyType = 'conv_fcBiasAda'
-
-seed = 1 ; n_parallel = 1
-ldim = 4 ; init_flr = 0 ; fbs = 20 ; mbs = 10  ; adamSteps = 300 
-
-load_policy = None
-
-expertDataLoc = '/home/russell/gmps/saved_expert_trajs/imgObs-Sawyer-Push-v4-mpl-50-numDemos5/Itr_250/' 
-
-
-variant  = {'policyType':policyType, 'ldim':ldim, 'init_flr': init_flr, 'seed' : seed , 'log_dir': '/home/russell/maml_rl/data/local/dmPoint',  'n_parallel' : n_parallel,
+variant  = {'policyType':policyType, 'ldim':ldim, 'init_flr': init_flr, 'seed' : seed , 'log_dir': log_dir+annotation,  'n_parallel' : n_parallel,
             
             'envType': envType  , 'fbs' : fbs  , 'mbs' : mbs ,  'max_path_length' : max_path_length , 'tasksFile': tasksFile , 'load_policy':load_policy , 'adam_steps': adamSteps, 'dagger': None,
             'expert_policy_loc': None , 'use_maesn': False , 'expertDataLoc': expertDataLoc }

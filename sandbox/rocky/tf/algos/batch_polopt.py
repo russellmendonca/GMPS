@@ -144,7 +144,7 @@ class BatchPolopt(RLAlgorithm):
             reset_args = self.reset_arg
         # return self.sampler.obtain_samples(itr, reset_args=reset_args, save_img_obs=self.save_img_obs) # we'll just save the whole paths and keep the observations
         print("debug, obtaining samples")
-        return self.sampler.obtain_samples(itr=itr, reset_args=reset_args, return_dict=False, extra_input=self.extra_input, extra_input_dim=(self.extra_input_dim if self.extra_input is not None else 0), preupdate=preupdate)
+        return self.sampler.obtain_samples(itr=itr, reset_args=reset_args, return_dict=False, preupdate=preupdate)
 
     def process_samples(self, itr, paths):
         return self.sampler.process_samples(itr, paths)

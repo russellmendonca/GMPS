@@ -377,8 +377,8 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         else:
             params = tf.global_variables()
 
-        #params = [p for p in params if p.name.startswith('mean_network') or p.name.startswith('output_std_param')]
         params = [p for p in params if p.name.startswith('mean_network')]
+        #params = [p for p in params if p.name.startswith('mean_network') or p.name.startswith('output_std_param')]
         params = [p for p in params if 'Adam' not in p.name]
         params = [p for p in params if 'main_optimizer' not in p.name]
 

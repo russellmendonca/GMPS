@@ -19,6 +19,7 @@ from multiworld.envs.mujoco.sawyer_xyz.door.sawyer_door_open import  SawyerDoorO
 from multiworld.envs.mujoco.sawyer_xyz.multi_domain.push_door import Sawyer_MultiDomainEnv
 from multiworld.envs.mujoco.sawyer_xyz.pickPlace.sawyer_coffee import SawyerCoffeeEnv
 
+from rllab.envs.mujoco.ant_env_rand_goal_ring import AntEnvRandGoalRing
 from multiworld.core.flat_goal_env import FlatGoalEnv
 from multiworld.core.finn_maml_env import FinnMamlEnv
 from multiworld.core.wrapper_env import NormalizedBoxEnv
@@ -37,7 +38,7 @@ import joblib
 import doodad as dd
 from doodad.exp_utils import setup
 
-OUTPUT_DIR = '/home/russell/gmps/data/local/'
+
 def experiment(variant):
 
 
@@ -49,7 +50,7 @@ def experiment(variant):
     n_itr = variant['n_itr'] ; default_step = variant['default_step']
     policyType = variant['policyType'] ; envType = variant['envType']
 
-    tasksFile = '/home/russell/multiworld/multiworld/envs/goals/' + variant['tasksFile']+'.pkl'
+    tasksFile = path_to_multiworld+'/multiworld/envs/goals/' + variant['tasksFile']+'.pkl'
     tasks = pickle.load(open(tasksFile, 'rb'))
 
     max_path_length = variant['max_path_length']
@@ -68,22 +69,25 @@ def experiment(variant):
         baseEnv = SawyerPickPlaceEnv( tasks = tasks , image = use_images , mpl = max_path_length)
        
     elif 'Door' in envType:
-        baseEnv = SawyerDoorOpenEnv(tasks = tasks , image = use_images , mpl = max_path_length) 
+        baseEnv = SawyerDoorOpenEnv(tasks = tasks , image = use_images , mpl = max_path_length)
+
+    elif 'Ant' in envType:
+        env = TfEnv(normalize(AntEnvRandGoalRing()))
 
     elif 'Coffee' in envType:
         baseEnv = SawyerCoffeeEnv(mpl = max_path_length)
 
-
     else:
-        raise AssertionError('Envs must be Push, PickPlace or Door')
+        raise AssertionError('')
 
-    if use_images:
-        obs_keys = ['img_observation']
-    else:
-        obs_keys = ['state_observation']
+    if envType in ['Push', 'PickPlace', 'Door']:
+        if use_images:
+            obs_keys = ['img_observation']
+        else:
+            obs_keys = ['state_observation']
+        env = TfEnv(NormalizedBoxEnv(FinnMamlEnv(FlatGoalEnv(baseEnv, obs_keys=obs_keys), reset_mode='task')))
 
-   
-    env = TfEnv(NormalizedBoxEnv( FinnMamlEnv(FlatGoalEnv(baseEnv, obs_keys))))
+
     baseline = ZeroBaseline(env_spec=env.spec)
     #baseline = LinearFeatureBaseline(env_spec = env.spec)
     batch_size = variant['batch_size']
@@ -179,43 +183,44 @@ def experiment(variant):
 
 val = False
 
-#envType = 'SawyerMultiDomain'; max_path_length = 100  ;  tasksFile =  'multi_domain/push_door_v1'
-envType = 'Coffee' ; max_path_length = 100 ; tasksFile = 'push_v4'
+####################### Example Testing script for Pushing ####################################
 #envType = 'Push' ; max_path_length = 50 ; tasksFile = 'push_v4_val'
+path_to_gmps = '/home/russell/gmps/'
+path_to_multiworld = '/home/russell/multiworld/'
+OUTPUT_DIR = path_to_gmps + '/data/local/'
 
-#policyType = 'basic' 
-#policyType = 'fullAda_Bias'
-policyType = 'biasAda_Bias'
+
+envType = 'Ant' ; annotation = 'v2-40tasks' ; tasksFile = 'rad2_quat_v2' ; max_path_length = 200
+policyType = 'fullAda_Bias'
+initFile = '/home/russell/data/s3/Ant-dense-quat-v2-itr400/mri_rosen/policyType_fullAda_Bias/ldim_4/' \
+           +'adamSteps_500_mbs_40_fbs_50_initFlr_0.5_seed_1/itr_9.pkl'
+#policyType = 'biasAda_Bias'
 #policyType = 'conv_fcBiasAda'
-#policyType = 'conv_no_update'
-initFlr = 0.0 ; seed = 0 ; metaFileItr = 15
 
-batch_size = 2000
-
+initFlr = 0.5 ; seed = 1
+batch_size = 10000
 
 
-#initFile = '/home/russell/data/s3/SawyerMultiDomain-Push-Door-v1/gmps/net_100-100-100-100-/policyType_biasAda_Bias/ldim_8/adamSteps_500_mbs_6_fbs_50_initFlr_0.5_seed_1/itr_15.pkl'
-#initFile = '/home/russell/doodad/examples/tmp_output/SawyerMultiDomain-Push-Door-v1/gmps/net_100-100-/policyType_fullAda_Bias/ldim_2/adamSteps_500_mbs_3_fbs_20_initFlr_0.5_seed_0/itr_12.pkl'
-#expPrefix = 'postSub-Testing-Imitation-valSet-Door-v4-mpl'+str(max_path_length)+'/'+str(policyType)+'_ldim_'+str(ldim)+'_fbs_'+str(fbs)+'_initFlr_'+str(initFlr)+'_metaFileItr_'+str(metaFileItr)+'_mbs_'+str(mbs)+'_adam'+str(adamSteps)+'_bs_'+str(batch_size)+'_seed_'+str(seed)
-initFile = '/home/russell/doodad/examples/tmp_output/Coffee-pick_place/gmps/net_150-100-150-/policyType_biasAda_Bias/ldim_2/adamSteps_500_mbs_3_fbs_20_initFlr_0.0_seed_0/itr_9.pkl'
+# Provide the meta-trained file which will be used for testing
 
-
-expPrefix = 'SawyerCoffee/'
+expPrefix = 'Test/Ant/'
 
 if 'conv' in policyType:
     expPrefix = 'img-'+expPrefix
 
-for index in range(1):
-    expPrefix_numItr = expPrefix+'/Task_'+str(index)+'/'
+#n_itr = 2
+for index in [2]:
 
-   
-    #for n_itr in range(1,6):
-    n_itr = 1
-    tf.reset_default_graph()
-    expName = expPrefix_numItr+ 'Itr_'+str(n_itr)
-    variant = {'taskIndex':index, 'init_file': initFile,  'n_parallel' : 1 ,   'log_dir':OUTPUT_DIR+expName+'/', 'seed' : seed  , 'tasksFile' : tasksFile , 'batch_size' : batch_size,
-                    'policyType' : policyType ,  'n_itr' : n_itr , 'default_step' : initFlr , 'envType' : envType , 'max_path_length' : max_path_length}
+    for n_itr in [20]:
+        expPrefix_numItr = expPrefix+'/Task_'+str(index)+'/'
 
-    experiment(variant)
+        # for n_itr in range(1,6):
+
+        tf.reset_default_graph()
+        expName = expPrefix_numItr+ 'Itr_'+str(n_itr)
+        variant = {'taskIndex':index, 'init_file': initFile,  'n_parallel' : 1 ,   'log_dir':OUTPUT_DIR+expName+'/', 'seed' : seed  , 'tasksFile' : tasksFile , 'batch_size' : batch_size,
+                        'policyType' : policyType ,  'n_itr' : n_itr , 'default_step' : initFlr , 'envType' : envType , 'max_path_length' : max_path_length}
+
+        experiment(variant)
 
 

@@ -142,19 +142,6 @@ class MAMLIL(BatchMAMLPolopt):
             
 
             dist_info_sym_i, updated_params_i = self.policy.updated_dist_info_sym(task_id=i,surr_obj=all_surr_objs[-1][i],new_obs_var=obs_vars[i], params_dict=new_params[i])
-            
-            if self.post_policy:
-                bs = tf.shape(obs_vars[i])[0]
-                
-                bias = updated_params_i['bias_transformation']
-                biases.append(bias)
-                tiled_bias = tf.tile(bias[None, :], (bs,1)) + 1e-1*tf.random_normal((bs, 2))
-                #tiled_bias = tf.tile(bias[None, :], (bs,1))
-                
-                contextual_obs = tf.concat([obs_vars[i], tiled_bias], axis=1)
-                dist_info_sym_i = self.post_policy.dist_info_sym(contextual_obs)
-               
-                self.biases = biases
             #updated_params.append(updated_params_i)
             # # here we define the loss for meta-gradient
             a_star = expert_action_vars[i]
@@ -166,12 +153,6 @@ class MAMLIL(BatchMAMLPolopt):
         outer_surr_obj = tf.reduce_mean(tf.stack(outer_surr_objs, 0)) # mean over all the different tasks
         input_vars_list += obs_vars + action_vars + expert_action_vars 
         target = [self.policy.all_params[key] for key in self.policy.all_params.keys()]
-
-        if self.post_policy:
-            bias_contraint = tf.reduce_mean((biases[0] - biases[2])**2 + (biases[1] - biases[3])**2)
-            outer_surr_obj+=10*bias_contraint
-            target = [self.policy.all_params[key] for key in self.policy.all_params.keys() if key!='bias_transformation']
-            target.extend([self.post_policy.all_params[key] for key in self.post_policy.all_params.keys()])
 
         self.optimizer.update_opt(
             loss=outer_surr_obj,

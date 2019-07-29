@@ -104,8 +104,6 @@ class VPG(BatchPolopt, Serializable):
         step_keys=[]
         all_keys = list(self.policy.all_params.keys())
        
-
-        
         for key in all_keys:
             if ('stepsize' not in key):
                 param_keys.append(key)
@@ -140,11 +138,11 @@ class VPG(BatchPolopt, Serializable):
            
     
         #if (itr>=1) and (itr<=5):
-        if itr >= 1:
-            for key in step_keys:
-                stepSize = sess.run(self.policy.all_params[key])
-                #stepSize = np.zeros(shape = stepSize.shape)
-                opList.append(self.policy.all_params[key].assign(stepSize/2))
+        # if itr >= 1:
+        #     for key in step_keys:
+        #         stepSize = sess.run(self.policy.all_params[key])
+        #         #stepSize = np.zeros(shape = stepSize.shape)
+        #         opList.append(self.policy.all_params[key].assign(stepSize/2))
        
         for assign_op in opList:
             sess.run(assign_op)
