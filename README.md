@@ -2,7 +2,7 @@
 
 This repo contains code accompaning the paper, [Guided Meta-Policy Search (Mendonca et al., NeurIPS 2019)](https://arxiv.org/pdf/1904.00956.pdf). 
 
-For the simulated sawyer robotic environments, see [this codebase](https://github.com/RussellM2020/R_multiworld).
+For the simulated sawyer robotic environments used in the paper, see [this codebase](https://github.com/RussellM2020/R_multiworld).
 
 ### Dependencies
 This code is based off of the rllab code repository and can be installed in the same way (see below). This codebase is not necessarily backwards compatible with rllab.
