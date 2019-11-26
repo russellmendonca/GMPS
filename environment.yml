@@ -6,12 +6,9 @@ channels:
     - https://conda.anaconda.org/menpo
     - jjhelmus
 dependencies:
-    - python==3.5.2
-    - numpy==1.10.4
     - scipy
     - path.py
     - python-dateutil
-    - joblib==0.9.4
     - mako
     - ipywidgets
     - numba
@@ -24,6 +21,9 @@ dependencies:
     - scikit-learn
     - tensorflow
     - pip:
+	- python==3.5.2
+	- numpy==1.10.4
+	- joblib==0.9.4
         - Pillow
         - atari-py
         - pyprind
