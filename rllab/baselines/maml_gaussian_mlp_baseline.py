@@ -400,8 +400,8 @@ class MAMLGaussianMLPBaseline(Baseline, Parameterized, Serializable):
 
         # This makes all of the parameters.
     def create_MLP(self, name, output_dim, hidden_sizes,
-                   hidden_W_init=tf_layers.xavier_initializer(), hidden_b_init=tf.zeros_initializer(),
-                   output_W_init=tf_layers.xavier_initializer(), output_b_init=tf.zeros_initializer(),
+                   hidden_W_init=tf_layers.xavier_initializer(), hidden_b_init=tf.zeros_initializer,
+                   output_W_init=tf_layers.xavier_initializer(), output_b_init=tf.zeros_initializer,
                    weight_normalization=False,
                    ):
         all_params = OrderedDict()

@@ -230,14 +230,15 @@ def experiment(variant):
     algo.train()
 
 ########### Example Launcher for Vision Pushing #####################
-path_to_gmps = '/home/russell/gmps/'
-path_to_multiworld = '/home/russell/multiworld/'
+user = 'gberseth'
+path_to_gmps = '/home/'+str(user)+'/playground/GMPS/'
+path_to_multiworld = '/home/'+str(user)+'/playground/multiworld/'
 
 # log_dir = '/home/russell/gmps/data/SawyerPush_repl/'
 # envType = 'Push' ; annotation = 'v4-mpl-50-SAC' ; tasksFile = 'sawyer_push/push_v4' ; max_path_length = 50
 #expertDataLoc = path_to_gmps + '/saved_expert_trajs/SAC-pushing/'
 
-log_dir = '/home/russell/gmps/data/Ant_repl/'
+log_dir = path_to_gmps+'/data/Ant_repl/'
 envType = 'Ant' ; annotation = 'debug-40tasks-v2' ; tasksFile = 'rad2_quat_v2' ; max_path_length = 200
 expertDataLoc = path_to_gmps+'/saved_expert_trajs/ant-quat-v2-itr400/'
 
@@ -247,10 +248,10 @@ policyType = 'fullAda_Bias'
 seed = 0 ; n_parallel = 1
 ldim = 4 ; init_flr = 0.5 ; fbs = 10 ; mbs = 3  ; adamSteps = 500
 
-load_policy = '/home/russell/data/s3/Ant-dense-quat-v2-itr400/mri_rosen/policyType_fullAda_Bias/'+\
-            'ldim_4/adamSteps_500_mbs_40_fbs_50_initFlr_0.5_seed_1/itr_9.pkl'
+# load_policy = '/home/russell/data/s3/Ant-dense-quat-v2-itr400/mri_rosen/policyType_fullAda_Bias/'+\
+#             'ldim_4/adamSteps_500_mbs_40_fbs_50_initFlr_0.5_seed_1/itr_9.pkl'
 #load_policy = '/home/russell/gmps/data/Ant_repl/rep-10tasks-v2/itr_1.pkl'
-#load_policy = None
+load_policy = None
 #load_policy = None
 #'imgObs-Sawyer-Push-v4-mpl-50-numDemos5/Itr_250/'
 

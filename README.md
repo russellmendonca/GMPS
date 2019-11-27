@@ -9,6 +9,9 @@ This code is based off of the rllab code repository and can be installed in the 
 
 The GMPS code uses the TensorFlow rllab version, so be sure to install TensorFlow v1.0+.
 
+- Copy mujoco 1.31 into the folder `./vendor/mujoco/`
+- Install [multiworld](https://github.com/russellmendonca/R_multiworld) as well and add it to the PYTHONPATH
+
 ### Usage
 Sample train and test scripts can be found in launchers/
 

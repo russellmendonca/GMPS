@@ -59,7 +59,7 @@ def forward_dense_layer(input, W, b, nonlinearity=tf.identity, batch_norm=False,
     else:
         return nonlinearity(activation)
 
-def make_param_layer(num_units, name='', param=tf.zeros_initializer(), trainable=True):
+def make_param_layer(num_units, name='', param=tf.zeros_initializer, trainable=True):
     param = add_param(param, (num_units,), layer_name=name, name='param', trainable=trainable)
     return param
 

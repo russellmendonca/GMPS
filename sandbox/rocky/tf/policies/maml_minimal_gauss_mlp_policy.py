@@ -417,8 +417,8 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
 
     # This makes all of the parameters.
     def create_MLP(self, name, output_dim, hidden_sizes,
-                   hidden_W_init=tf_layers.xavier_initializer(dtype=dtypes.float32), hidden_b_init=tf.zeros_initializer(dtype=dtypes.float32),
-                   output_W_init=tf_layers.xavier_initializer(dtype=dtypes.float32), output_b_init=tf.zeros_initializer(dtype=dtypes.float32),
+                   hidden_W_init=tf_layers.xavier_initializer(dtype=dtypes.float32), hidden_b_init=tf.zeros_initializer,
+                   output_W_init=tf_layers.xavier_initializer(dtype=dtypes.float32), output_b_init=tf.zeros_initializer,
                    weight_normalization=False,
                    ):
         all_params = OrderedDict()
