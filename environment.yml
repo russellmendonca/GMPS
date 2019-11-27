@@ -5,6 +5,7 @@ channels:
     - https://conda.anaconda.org/cjs14
     - https://conda.anaconda.org/menpo
     - jjhelmus
+    - anaconda  # for mkl
 dependencies:
     - scipy
     - path.py
@@ -20,10 +21,10 @@ dependencies:
     - opencv3=3.1.0
     - scikit-learn
     - tensorflow
+    - python=3.5.2
+    - numpy=1.10.4
+    - joblib=0.9.4
     - pip:
-	- python==3.5.2
-	- numpy==1.10.4
-	- joblib==0.9.4
         - Pillow
         - atari-py
         - pyprind
