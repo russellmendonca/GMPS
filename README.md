@@ -11,6 +11,7 @@ The GMPS code uses the TensorFlow rllab version, so be sure to install TensorFlo
 
 - Copy mujoco 1.31 into the folder `./vendor/mujoco/`
 - Install [multiworld](https://github.com/russellmendonca/R_multiworld) as well and add it to the PYTHONPATH
+- `sudo apt-get install graphviz`
 
 ### Usage
 Sample train and test scripts can be found in launchers/

@@ -242,7 +242,7 @@ path_to_multiworld = '/home/'+str(user)+'/playground/R_multiworld/'
 
 log_dir = path_to_gmps+'/data/Ant_repl/'
 envType = 'Ant' ; annotation = 'debug-40tasks-v2' ; tasksFile = 'rad2_quat_v2' ; max_path_length = 200
-expertDataLoc = path_to_gmps+'/saved_expert_trajs/ant-quat-v2-itr400/'
+expertDataLoc = path_to_gmps+'/saved_expert_trajs/ant-quat-v2-10tasks-itr400/'
 
 #policyType = 'conv_fcBiasAda'
 policyType = 'fullAda_Bias'

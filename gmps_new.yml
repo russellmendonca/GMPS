@@ -15,4 +15,8 @@ dependencies:
     - lasagne==0.1
     - theano==0.7.0
     - pydot-ng
+    - Cython
+    - lockfile
+    - glfw
+    - cffi
 
