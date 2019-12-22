@@ -218,5 +218,5 @@ dependencies:
     - torch==1.0.0
     - tqdm==4.28.1
     - urllib3==1.24.1
-prefix: /home/gberseth/anaconda3/envs/rllab3
+prefix: /home/gberseth/anaconda2/envs/rllab3
 

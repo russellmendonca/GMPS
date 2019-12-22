@@ -24,8 +24,6 @@ dependencies:
   - entrypoints=0.2.3
   - expat=2.2.6
   - flask=1.0.2
-  - fontconfig=2.12.1
-  - freetype=2.5.5
   - glib=2.56.2
   - gmp=6.1.2
   - gst-plugins-base=1.14.0
@@ -34,7 +32,6 @@ dependencies:
   - hdf5=1.10.2
   - html5lib=1.0.1
   - hyperlink=18.0.0
-  - icu=54.1
   - idna=2.7
   - incremental=17.5.0
   - intel-openmp=2019.1
@@ -53,7 +50,6 @@ dependencies:
   - libgcc-ng=8.2.0
   - libgfortran=3.0.0
   - libgfortran-ng=7.3.0
-  - libiconv=1.14
   - libopenblas=0.3.3
   - libpng=1.6.35
   - libsodium=1.0.16
@@ -73,9 +69,7 @@ dependencies:
   - nbformat=4.4.0
   - notebook=5.6.0
   - numba=0.39.0
-  - numpy=1.12.0
   - olefile=0.46
-  - openblas=0.2.19
   - openssl=1.0.2p
   - pandas=0.23.4
   - pandoc=2.2.3.2
@@ -98,12 +92,10 @@ dependencies:
   - pyopenssl=18.0.0
   - pyparsing=2.2.1
   - pyqt=5.6.0
-  - python=3.5.2
   - python-dateutil=2.7.3
   - pytz=2018.5
   - pyzmq=17.1.2
   - qt=5.6.2
-  - readline=6.2
   - scikit-learn=0.19.0
   - scipy=0.19.1
   - seaborn=0.9.0
@@ -113,11 +105,9 @@ dependencies:
   - simplegeneric=0.8.1
   - sip=4.18.1
   - six=1.11.0
-  - sqlite=3.13.0
   - statsmodels=0.9.0
   - terminado=0.8.1
   - testpath=0.3.1
-  - tk=8.5.18
   - tornado=5.1.1
   - traitlets=4.3.2
   - twisted=18.7.0
@@ -140,6 +130,9 @@ dependencies:
   - pytorch=0.1.9
   - torchvision=0.1.6
   - pip:
+    - libgfortran==3.0.0
+    - numpy==1.12.0
+    - tk==8.5.18
     - absl-py==0.6.1
     - astor==0.7.1
     - atari-py==0.1.7
