@@ -48,8 +48,6 @@ dependencies:
   - libffi=3.2.1
   - libgcc=7.2.0
   - libgcc-ng=8.2.0
-  - libgfortran=3.0.0
-  - libgfortran-ng=7.3.0
   - libopenblas=0.3.3
   - libpng=1.6.35
   - libsodium=1.0.16
@@ -64,7 +62,6 @@ dependencies:
   - mistune=0.8.3
   - mkl=2017.0.4
   - mpi4py=2.0.0
-  - mpich2=1.4.1p1
   - nbconvert=5.3.1
   - nbformat=4.4.0
   - notebook=5.6.0
@@ -130,7 +127,7 @@ dependencies:
   - pytorch=0.1.9
   - torchvision=0.1.6
   - pip:
-    - libgfortran==3.0.0
+    - mpi4py==2.0.0
     - numpy==1.12.0
     - tk==8.5.18
     - absl-py==0.6.1
