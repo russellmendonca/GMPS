@@ -1,4 +1,6 @@
 from sandbox.rocky.tf.algos.maml_il import MAMLIL
+import sys
+sys.path.append("../R_multiworld")
 
 from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
 from rllab.baselines.gaussian_mlp_baseline import GaussianMLPBaseline
@@ -232,7 +234,7 @@ def experiment(variant):
 ########### Example Launcher for Vision Pushing #####################
 user = 'gberseth'
 path_to_gmps = '/home/'+str(user)+'/playground/GMPS/'
-path_to_multiworld = '/home/'+str(user)+'/playground/multiworld/'
+path_to_multiworld = '/home/'+str(user)+'/playground/R_multiworld/'
 
 # log_dir = '/home/russell/gmps/data/SawyerPush_repl/'
 # envType = 'Push' ; annotation = 'v4-mpl-50-SAC' ; tasksFile = 'sawyer_push/push_v4' ; max_path_length = 50
