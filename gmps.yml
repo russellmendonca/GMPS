@@ -61,7 +61,6 @@ dependencies:
   - matplotlib=2.0.2
   - mistune=0.8.3
   - mkl=2017.0.4
-  - mpi4py=2.0.0
   - nbconvert=5.3.1
   - nbformat=4.4.0
   - notebook=5.6.0
