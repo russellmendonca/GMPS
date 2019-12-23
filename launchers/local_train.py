@@ -199,7 +199,7 @@ def experiment(variant):
         max_path_length=max_path_length,
         meta_batch_size=meta_batch_size,  # number of tasks sampled for beta grad update
         num_grad_updates=num_grad_updates,  # number of alpha grad updates
-        n_itr=1, #100
+        n_itr=100,
         make_video=False,
         use_maml=True,
         use_pooled_goals=True,
