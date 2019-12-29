@@ -126,7 +126,7 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
 
             #For rllab
             for key in self.info_logKeys:
-                print ("path: ", paths[0])
+                # print ("path: ", paths[0])
                 logger.record_tabular(prefix + 'last_'+key, np.mean([path['env_infos'][key][-1] for path in paths if 'env_infos' in path]) )
 
         else:

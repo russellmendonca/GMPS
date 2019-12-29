@@ -19,4 +19,8 @@ dependencies:
     - lockfile
     - glfw
     - cffi
+    - python-dateutil==2.7.3
+    - pyprind==2.11.2
+    - opencv-python
+    - gym
 
