@@ -53,11 +53,11 @@ RUN mkdir -p /root/.mujoco \
 ### Lets not put the key in the image for now.
 # COPY ./files/mjkey.txt /root/.mujoco/mjkey.txt
 # COPY .mujoco /root/.mujoco
-COPY ~/mujoco/mjkey.txt /root/.mujoco/
+COPY ./vendor/mujoco/mjkey.txt /root/.mujoco/
 RUN ln -s /root/.mujoco/mujoco200_linux /root/.mujoco/mujoco200
 ENV LD_LIBRARY_PATH /root/.mujoco/mjpro150/bin:${LD_LIBRARY_PATH}
 ENV LD_LIBRARY_PATH /root/.mujoco/mujoco130/bin:${LD_LIBRARY_PATH}
-# ENV LD_LIBRARY_PATH /root/.mujoco/mujoco200_linux/bin:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH /root/.mujoco/mujoco200_linux/bin:${LD_LIBRARY_PATH}
 
 
 ENV PATH /opt/conda/bin:$PATH
@@ -101,6 +101,8 @@ RUN pip install tensorboard_logger
 RUN pip install pyOpenGL
 RUN pip install pyquaternion
 RUN pip install mujoco-py
+
+RUN python -c 'import mujoco_py'
 
 RUN cd /root
 RUN git clone https://github.com/rll/rllab.git /root/rllab
