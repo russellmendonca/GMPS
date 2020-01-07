@@ -75,7 +75,7 @@ RUN echo "source activate gmps" >> ~/.bashrc
 
 # RUN pip3 install scikit-image
 
-ENV PATH /opt/conda/envs/railrl/bin:$PATH
+ENV PATH /opt/conda/envs/gmps/bin:$PATH
 
 RUN pip install tensorflow==1.12.0
 RUN pip install joblib==0.10.3
