@@ -14,6 +14,10 @@ The GMPS code uses the TensorFlow rllab version, so be sure to install TensorFlo
 - `sudo apt-get install graphviz`
 - `sudo apt-get install  python3-dateutil`
 
+### Docker
+
+The docker image is online on dockerhub at russellm888/railrl-gpu
+
 ### Usage
 Sample train and test scripts can be found in launchers/
 

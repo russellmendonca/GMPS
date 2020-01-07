@@ -57,7 +57,7 @@ COPY ./vendor/mujoco/mjkey.txt /root/.mujoco/
 RUN ln -s /root/.mujoco/mujoco200_linux /root/.mujoco/mujoco200
 ENV LD_LIBRARY_PATH /root/.mujoco/mjpro150/bin:${LD_LIBRARY_PATH}
 ENV LD_LIBRARY_PATH /root/.mujoco/mujoco130/bin:${LD_LIBRARY_PATH}
-ENV LD_LIBRARY_PATH /root/.mujoco/mujoco200_linux/bin:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH /root/.mujoco/mujoco200/bin:${LD_LIBRARY_PATH}
 
 
 ENV PATH /opt/conda/bin:$PATH
@@ -105,14 +105,15 @@ RUN pip install mujoco-py
 RUN python -c 'import mujoco_py'
 
 RUN cd /root
-RUN git clone https://github.com/rll/rllab.git /root/rllab
+# RUN git clone https://github.com/rll/rllab.git /root/rllab
 RUN git clone https://github.com/russellmendonca/R_multiworld /root/R_multiworld
 # RUN pushd rllab
 # RUN ./scripts/setup_linux.sh
 # RUN popd
-ENV PYTHONPATH /root/rllab/:${PYTHONPATH}
-ENV PYTHONPATH /root/R_multiworld/:${PYTHONPATH}
-ENV PYTHONPATH /root/GMPS/:${PYTHONPATH}
+# ENV PYTHONPATH /root/playground/rllab/:${PYTHONPATH}
+# export PYTHONPATH=/home/gberseth/playground/R_multiworld/:${PYTHONPATH}
+ENV PYTHONPATH /root/playground/R_multiworld/:${PYTHONPATH}
+ENV PYTHONPATH /root/playground/GMPS/:${PYTHONPATH}
 
 RUN git clone https://github.com/Neo-X/GMPS.git /root/GMPS
 
