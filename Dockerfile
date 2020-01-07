@@ -54,7 +54,7 @@ RUN mkdir -p /root/.mujoco \
 ### Lets not put the key in the image for now.
 # COPY ./files/mjkey.txt /root/.mujoco/mjkey.txt
 # COPY .mujoco /root/.mujoco
-COPY ./vendor/mujoco/mjkey.txt /root/.mujoco/
+COPY ~/.mujoco/mjkey.txt /root/.mujoco/
 RUN ln -s /root/.mujoco/mujoco200_linux /root/.mujoco/mujoco200
 ENV LD_LIBRARY_PATH /root/.mujoco/mjpro150/bin:${LD_LIBRARY_PATH}
 ENV LD_LIBRARY_PATH /root/.mujoco/mujoco130/bin:${LD_LIBRARY_PATH}
@@ -125,6 +125,6 @@ RUN ls
 RUN mkdir /root/playground/GMPS/vendor/mujoco
 RUN cp ~/.mujoco/mjpro131/bin/*.so* /root/playground/GMPS/vendor/mujoco/
 RUN ls /root/playground/GMPS/vendor/mujoco/
-COPY ./vendor/mujoco/mjkey.txt /root/playground/GMPS/vendor/mujoco/
+COPY ~/.mujoco/mjkey.txt /root/playground/GMPS/vendor/mujoco/
 
 RUN ls
