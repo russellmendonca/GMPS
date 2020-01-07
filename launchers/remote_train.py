@@ -233,8 +233,8 @@ def experiment(variant):
 
 ########### Example Launcher for Vision Pushing #####################
 user = 'root'
-path_to_gmps = '/home/'+str(user)+'/playground/GMPS/'
-path_to_multiworld = '/home/'+str(user)+'/playground/R_multiworld/'
+path_to_gmps = '/'+str(user)+'/playground/GMPS/'
+path_to_multiworld = '/'+str(user)+'/playground/R_multiworld/'
 
 # log_dir = '/home/russell/gmps/data/SawyerPush_repl/'
 # envType = 'Push' ; annotation = 'v4-mpl-50-SAC' ; tasksFile = 'sawyer_push/push_v4' ; max_path_length = 50

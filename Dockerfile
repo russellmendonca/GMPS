@@ -104,9 +104,11 @@ RUN pip install mujoco-py
 
 RUN python -c 'import mujoco_py'
 
-RUN cd /root
-# RUN git clone https://github.com/rll/rllab.git /root/rllab
-RUN git clone https://github.com/russellmendonca/R_multiworld /root/R_multiworld
+RUN mkdir /root/playground
+RUN cd /root/playground
+
+# RUN git clone https://github.com/rll/rllab.git /root/playground/rllab
+RUN git clone https://github.com/russellmendonca/R_multiworld /root/playground/R_multiworld
 # RUN pushd rllab
 # RUN ./scripts/setup_linux.sh
 # RUN popd
@@ -115,14 +117,14 @@ RUN git clone https://github.com/russellmendonca/R_multiworld /root/R_multiworld
 ENV PYTHONPATH /root/playground/R_multiworld/:${PYTHONPATH}
 ENV PYTHONPATH /root/playground/GMPS/:${PYTHONPATH}
 
-RUN git clone https://github.com/Neo-X/GMPS.git /root/GMPS
+RUN git clone https://github.com/Neo-X/GMPS.git /root/playground/GMPS
 
 # RUN pushd GMPS
 RUN ls
 RUN pwd
-RUN mkdir /root/GMPS/vendor/mujoco
-RUN cp ~/.mujoco/mjpro131/bin/*.so* /root/GMPS/vendor/mujoco/
-RUN ls /root/GMPS/vendor/mujoco/
-COPY ./vendor/mujoco/mjkey.txt /root/GMPS/vendor/mujoco/
+RUN mkdir /root/playground/GMPS/vendor/mujoco
+RUN cp ~/.mujoco/mjpro131/bin/*.so* /root/playground/GMPS/vendor/mujoco/
+RUN ls /root/playground/GMPS/vendor/mujoco/
+COPY ./vendor/mujoco/mjkey.txt /root/playground/GMPS/vendor/mujoco/
 
 RUN ls
