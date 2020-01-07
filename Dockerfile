@@ -25,6 +25,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
         libxrandr2 \
         libxinerama1 \
         libxcursor1 \
+        python3-dev python3-pip graphviz \
         freeglut3-dev build-essential libx11-dev libxmu-dev libxi-dev libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libglew1.6-dev mesa-utils
         
 # Not sure why this is needed
@@ -61,7 +62,7 @@ ENV LD_LIBRARY_PATH /root/.mujoco/mujoco200/bin:${LD_LIBRARY_PATH}
 
 
 ENV PATH /opt/conda/bin:$PATH
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+RUN wget --quiet https://repo.anaconda.com/archive/Anaconda2-2019.10-Linux-x86_64.sh -O /tmp/miniconda.sh && \
     /bin/bash /tmp/miniconda.sh -b -p /opt/conda && \
     rm /tmp/miniconda.sh && \
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
@@ -69,14 +70,14 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 
 RUN conda update -y --name base conda && conda clean --all -y
 
-RUN conda create --name gmps python=3.6 pip
+RUN conda create --name gmps python=3.6.9 pip
 RUN echo "source activate gmps" >> ~/.bashrc
 
 # RUN pip3 install scikit-image
 
 ENV PATH /opt/conda/envs/railrl/bin:$PATH
 
-RUN pip install tensorflow==1.14.0
+RUN pip install tensorflow==1.12.0
 RUN pip install joblib==0.10.3
 RUN pip install cached-property==1.5.1
 RUN pip install mako==1.0.7
@@ -121,7 +122,6 @@ RUN git clone https://github.com/Neo-X/GMPS.git /root/playground/GMPS
 
 # RUN pushd GMPS
 RUN ls
-RUN pwd
 RUN mkdir /root/playground/GMPS/vendor/mujoco
 RUN cp ~/.mujoco/mjpro131/bin/*.so* /root/playground/GMPS/vendor/mujoco/
 RUN ls /root/playground/GMPS/vendor/mujoco/
