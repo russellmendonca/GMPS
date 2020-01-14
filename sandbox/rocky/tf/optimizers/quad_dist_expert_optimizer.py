@@ -30,7 +30,9 @@ class QuadDistExpertOptimizer(Serializable):
             adapt_penalty=True,
             adam_steps=5,
             use_momentum_optimizer=False,
+            comet_logger=None
     ):
+        self.comet_logger=comet_logger
         Serializable.quick_init(self, locals())
         self._name = name
         assert len([var for var in tf.global_variables() if self._name in var.name]) == 0, "please choose a different name for your optimizer"
@@ -102,6 +104,8 @@ class QuadDistExpertOptimizer(Serializable):
             if i%50 == 0:
                logger.log("imitation_loss %s" % adam_loss)
         logger.record_tabular("ILLoss", adam_loss)
+        if self.comet_logger:
+            self.comet_logger.log_metric("ILLoss", adam_loss)
         return adam_loss
 
 

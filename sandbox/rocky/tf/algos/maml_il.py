@@ -27,12 +27,14 @@ class MAMLIL(BatchMAMLPolopt):
             adam_curve=None,
             l2loss_std_mult=1.0,
             importance_sampling_modifier=tf.identity,
-            metalearn_baseline=False,
+            comet_logger=None,
+        metalearn_baseline=False,
             **kwargs):
+        self.comet_logger=comet_logger
         if optimizer is None:
             if optimizer_args is None:
                 optimizer_args = dict(min_penalty=1e-8)
-            optimizer = QuadDistExpertOptimizer("main_optimizer", adam_steps=adam_steps, use_momentum_optimizer=False)  #  **optimizer_args)
+            optimizer = QuadDistExpertOptimizer("main_optimizer", adam_steps=adam_steps, use_momentum_optimizer=False, comet_logger=comet_logger)  #  **optimizer_args)
         self.optimizer = optimizer
         self.step_size = step_size
         self.adam_curve = adam_curve if adam_curve is not None else [adam_steps]

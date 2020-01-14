@@ -1,7 +1,10 @@
 from sandbox.rocky.tf.algos.maml_il import MAMLIL
 import sys
 sys.path.append("../R_multiworld")
+
 from rllab.misc.comet_logger import CometLogger
+comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
+                            project_name="ml4l3", workspace="glenb")
 from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
 from rllab.baselines.gaussian_mlp_baseline import GaussianMLPBaseline
 from rllab.baselines.maml_gaussian_mlp_baseline import MAMLGaussianMLPBaseline
@@ -226,7 +229,8 @@ def experiment(variant):
         plotDirPrefix = None,
         latent_dim = ldim,
         dagger = dagger , 
-        expert_policy_loc = expert_policy_loc
+        expert_policy_loc = expert_policy_loc,
+        comet_logger=comet_logger
     )
     
     algo.train()
