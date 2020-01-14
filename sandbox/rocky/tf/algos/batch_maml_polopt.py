@@ -318,10 +318,10 @@ class BatchMAMLPolopt(RLAlgorithm):
                             logger.record_tabular("TestItr", ("1" if testitr else "0"),front=True)
                             logger.record_tabular("MetaItr", self.metaitr,front=True)
                         if self.comet_logger:
-                            self.comet_logger.log_metrics("AverageReturnLastTest",
+                            self.comet_logger.log_metric("AverageReturnLastTest",
                                                   self.sampler.memory["AverageReturnLastTest"])
-                            logger.record_tabular("TestItr", ("1" if testitr else "0"), front=True)
-                            logger.record_tabular("MetaItr", self.metaitr, front=True)
+                            self.comet_logger.log_metric("TestItr", ("1" if testitr else "0"))
+                            self.comet_logger.log_metric("MetaItr", self.metaitr)
                         # logger.log("Logging diagnostics...")
                         # self.log_diagnostics(flatten_list(paths.values()), prefix=str(step))
 
