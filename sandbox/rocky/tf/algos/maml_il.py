@@ -29,7 +29,6 @@ class MAMLIL(BatchMAMLPolopt):
             comet_logger=None,
         metalearn_baseline=False,
             **kwargs):
-        self.comet_logger=comet_logger
         if optimizer is None:
             if optimizer_args is None:
                 optimizer_args = dict(min_penalty=1e-8)
@@ -51,7 +50,7 @@ class MAMLIL(BatchMAMLPolopt):
         else:
             self.extra_input_dim = 0
 
-        super(MAMLIL, self).__init__(optimizer=optimizer, beta_steps=beta_steps, use_maml_il=True,  **kwargs)
+        super(MAMLIL, self).__init__(optimizer=optimizer, beta_steps=beta_steps, use_maml_il=True,  comet_logger=comet_logger, **kwargs)
 
 
     def make_vars(self, stepnum='0'):
