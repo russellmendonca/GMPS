@@ -14,7 +14,6 @@ from collections import OrderedDict
 
 
 class MAMLIL(BatchMAMLPolopt):
-class MAMLIL(BatchMAMLPolopt):
 
     def __init__(
             self,
