@@ -50,7 +50,7 @@ class BaseSampler(Sampler):
         self.memory["AverageReturnLastTest"] = 0.0
         self.memory["AverageReturnBestTest"] = 0.0
 
-    def process_samples(self, itr, paths, prefix='', log=True, fast_process=False, testitr=False, metalearn_baseline=False):
+    def process_samples(self, itr, paths, prefix='', log=True, fast_process=False, testitr=False, metalearn_baseline=False, comet_logger=None):
         baselines = []
         returns = []
         if testitr:
@@ -250,6 +250,13 @@ class BaseSampler(Sampler):
                 env_infos=env_infos,
                 paths=paths,
             )
+
+        if comet_logger:
+            comet_logger.increase_step()
+            comet_logger.log_metric('StdReturn', np.std(undiscounted_returns))
+            comet_logger.log_metric('MaxReturn', np.max(undiscounted_returns))
+            comet_logger.log_metric('MinReturn', np.min(undiscounted_returns))
+            comet_logger.log_metric('AverageReturn', np.mean(undiscounted_returns))
         if log:
             # logger.record_tabular('Iteration', itr)
             # logger.record_tabular('AverageDiscountedReturn',

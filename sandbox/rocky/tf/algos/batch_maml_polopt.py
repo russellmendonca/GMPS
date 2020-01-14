@@ -77,6 +77,7 @@ class BatchMAMLPolopt(RLAlgorithm):
             extra_input_dim=0,
             seed=1,
             debug_pusher=False,
+            comet_logger=None
             **kwargs
     ):
         """
@@ -102,6 +103,7 @@ class BatchMAMLPolopt(RLAlgorithm):
         :param store_paths: Whether to save all paths data to the snapshot.
         :return:
         """
+        self.comet_logger = comet_logger
         self.seed=seed
         self.env = env
         self.policy = policy
@@ -248,6 +250,8 @@ class BatchMAMLPolopt(RLAlgorithm):
             self.load_expert_traces()
             
             for itr in range(self.start_itr, self.n_itr):
+                if self.comet_logger:
+                    self.comet_logger.increase_step()
                 itr_start_time = time.time()
                 np.random.seed(self.seed+itr)
                 tf.set_random_seed(self.seed+itr)
@@ -313,6 +317,11 @@ class BatchMAMLPolopt(RLAlgorithm):
                             logger.record_tabular("AverageReturnLastTest", self.sampler.memory["AverageReturnLastTest"],front=True)  #TODO: add functionality for multiple grad steps
                             logger.record_tabular("TestItr", ("1" if testitr else "0"),front=True)
                             logger.record_tabular("MetaItr", self.metaitr,front=True)
+                        if self.comet_logger:
+                            self.comet_logger.log_metrics("AverageReturnLastTest",
+                                                  self.sampler.memory["AverageReturnLastTest"])
+                            logger.record_tabular("TestItr", ("1" if testitr else "0"), front=True)
+                            logger.record_tabular("MetaItr", self.metaitr, front=True)
                         # logger.log("Logging diagnostics...")
                         # self.log_diagnostics(flatten_list(paths.values()), prefix=str(step))
 
@@ -357,7 +366,7 @@ class BatchMAMLPolopt(RLAlgorithm):
         self.shutdown_worker()
 
     def log_diagnostics(self, paths, prefix):
-        self.env.log_diagnostics(paths, prefix)
+        self.env.log_diagnostics(paths, prefix, comet_logger=self.comet_logger)
         #self.policy.log_diagnostics(paths, prefix)
         #self.baseline.log_diagnostics(paths)
 

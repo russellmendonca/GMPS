@@ -115,7 +115,7 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
         return Step(ob, float(reward), done, **infos)
 
     @overrides
-    def log_diagnostics(self, paths, prefix='', logger = None):
+    def log_diagnostics(self, paths, prefix='', logger = None, comet_logger=None):
 
         from rllab.misc import logger
         if type(paths[0]) == dict:
@@ -129,6 +129,11 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
                 # print ("path: ", paths[0])
                 logger.record_tabular(prefix + 'last_'+key, np.mean([path['env_infos'][key][-1] for path in paths if 'env_infos' in path]) )
 
+            if comet_logger:
+                for key in self.info_logKeys:
+                    # print ("path: ", paths[0])
+                    comet_logger.log_metric(prefix + 'last_' + key, np.mean(
+                        [path['env_infos'][key][-1] for path in paths if 'env_infos' in path]))
         else:
             raise NotImplementedError
 

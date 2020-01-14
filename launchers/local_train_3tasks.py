@@ -1,7 +1,7 @@
 from sandbox.rocky.tf.algos.maml_il import MAMLIL
 import sys
 sys.path.append("../R_multiworld")
-
+from rllab.misc.comet_logger import CometLogger
 from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
 from rllab.baselines.gaussian_mlp_baseline import GaussianMLPBaseline
 from rllab.baselines.maml_gaussian_mlp_baseline import MAMLGaussianMLPBaseline

@@ -26,8 +26,8 @@ class ProxyEnv(Env):
     def render(self, *args, **kwargs):
         return self._wrapped_env.render(*args, **kwargs)
 
-    def log_diagnostics(self, paths, prefix=''):
-        self._wrapped_env.log_diagnostics(paths, prefix=prefix)
+    def log_diagnostics(self, paths, prefix='', comet_logger=None):
+        self._wrapped_env.log_diagnostics(paths, prefix=prefix, comet_logger=comet_logger)
 
     @property
     def horizon(self):
