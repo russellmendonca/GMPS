@@ -3,6 +3,7 @@ sys.path.append("../R_multiworld")
 from rllab.misc.comet_logger import CometLogger
 comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
                             project_name="ml4l3", workspace="glenb")
+comet_logger.set_name("remote_train GMPS")
 from sandbox.rocky.tf.algos.maml_il import MAMLIL
 
 from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
