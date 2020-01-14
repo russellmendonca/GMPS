@@ -270,6 +270,9 @@ class BaseSampler(Sampler):
             if not fast_process and not metalearn_baseline:
                 logger.record_tabular(prefix + 'ExplainedVariance', ev)
                 logger.record_tabular(prefix + 'BaselinePredLoss', l2)
+                # if comet_logger:
+                #     comet_logger.log_metric('ExplainedVariance', ev)
+                #     comet_logger.log_metric('BaselinePredLoss', l2)
 
             logger.record_tabular(prefix + 'NumTrajs', len(paths))
             # logger.record_tabular(prefix + 'Entropy', ent)

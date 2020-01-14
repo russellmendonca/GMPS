@@ -213,7 +213,7 @@ class BatchMAMLPolopt(RLAlgorithm):
 
 
     def process_samples(self, itr, paths, prefix='', log=True, fast_process=False, testitr=False, metalearn_baseline=False):
-        return self.sampler.process_samples(itr, paths, prefix=prefix, log=log, fast_process=fast_process, testitr=testitr, metalearn_baseline=metalearn_baseline)
+        return self.sampler.process_samples(itr, paths, prefix=prefix, log=log, fast_process=fast_process, testitr=testitr, metalearn_baseline=metalearn_baseline, comet_logger=self.comet_logger)
 
     def train(self):
         # TODO - make this a util
