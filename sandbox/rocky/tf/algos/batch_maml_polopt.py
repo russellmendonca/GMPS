@@ -77,7 +77,7 @@ class BatchMAMLPolopt(RLAlgorithm):
             extra_input_dim=0,
             seed=1,
             debug_pusher=False,
-            comet_logger=None
+            comet_logger=None,
             **kwargs
     ):
         """
