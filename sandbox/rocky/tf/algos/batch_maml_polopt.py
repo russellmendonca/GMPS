@@ -320,7 +320,7 @@ class BatchMAMLPolopt(RLAlgorithm):
                         if self.comet_logger:
                             self.comet_logger.log_metric("AverageReturnLastTest",
                                                   self.sampler.memory["AverageReturnLastTest"])
-                            self.comet_logger.log_metric("TestItr", ("1" if testitr else "0"))
+                            # self.comet_logger.log_metric("TestItr", ("1" if testitr else "0"))
                             self.comet_logger.log_metric("MetaItr", self.metaitr)
                         # logger.log("Logging diagnostics...")
                         # self.log_diagnostics(flatten_list(paths.values()), prefix=str(step))

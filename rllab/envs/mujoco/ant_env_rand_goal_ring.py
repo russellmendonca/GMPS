@@ -6,6 +6,7 @@ from rllab.envs.base import Step
 from rllab.misc.overrides import overrides
 from rllab.misc import logger
 import pickle
+import math
 
 def generate_goals(num_goals):
     radius = 2.0 
@@ -132,8 +133,10 @@ class AntEnvRandGoalRing(MujocoEnv, Serializable):
             if comet_logger:
                 for key in self.info_logKeys:
                     # print ("path: ", paths[0])
-                    comet_logger.log_metric(prefix + 'last_' + key, np.mean(
-                        [path['env_infos'][key][-1] for path in paths if 'env_infos' in path]))
+                    val = np.mean(
+                        [path['env_infos'][key][-1] for path in paths if 'env_infos' in path])
+                    val = 2.5 if math.isnan(val) else val
+                    comet_logger.log_metric(prefix + 'last_' + key, val)
         else:
             raise NotImplementedError
 
