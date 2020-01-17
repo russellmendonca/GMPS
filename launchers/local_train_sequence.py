@@ -259,7 +259,9 @@ for i in range(start_,end_):
     policyType = 'fullAda_Bias'
     
     seed = i ; n_parallel = 1
-    ldim = 4 ; init_flr = 0.5 ; fbs = i ; mbs = i//start_  ; adamSteps = 500
+    ### fbs is the number of epochs to sample
+    ### mbs is the number of tasks to sample using range(0,mbs), so they are not sampled from the full set of tasks.
+    ldim = 4 ; init_flr = 0.5 ; fbs = 10 ; mbs = i  ; adamSteps = 500
     
     # load_policy = '/home/russell/data/s3/Ant-dense-quat-v2-itr400/mri_rosen/policyType_fullAda_Bias/'+\
     #             'ldim_4/adamSteps_500_mbs_40_fbs_50_initFlr_0.5_seed_1/itr_9.pkl'
