@@ -1,12 +1,6 @@
 import sys
 sys.path.append("../R_multiworld")
 
-from rllab.misc.comet_logger import CometLogger
-comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
-                            project_name="ml4l3", workspace="glenb")
-
-
-
 expl = False 
 l2loss_std_mult = 0 ; use_corr_term = False
 extra_input =None ; extra_input_dim = 0
@@ -230,12 +224,15 @@ def experiment(variant):
         latent_dim = ldim,
         dagger = dagger , 
         expert_policy_loc = expert_policy_loc,
-        comet_logger=comet_logger
+        comet_logger=variant['comet_logger']
     )
     
     algo.train()
 
 from multiprocessing import Process
+from rllab.misc.comet_logger import CometLogger
+comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
+                            project_name="ml4l3", workspace="glenb")
 
 ########### Example Launcher for Vision Pushing #####################
 user = 'gberseth'
@@ -253,7 +250,7 @@ for i in range(start_,end_):
     
     log_dir = path_to_gmps+'/data/Ant_repl/'
     envType = 'Ant' ; annotation = 'debug-'+str(i)+'tasks-v0' ; tasksFile = 'rad2_quat_v2' ; max_path_length = 200
-    expertDataLoc = path_to_gmps+'/saved_expert_trajs/ant-quat-v2-'+str(i)+'tasks-itr400/'
+    expertDataLoc = path_to_gmps+'/saved_expert_trajs/ant-quat-v2-10tasks-itr400/'
     
     #policyType = 'conv_fcBiasAda'
     policyType = 'fullAda_Bias'
@@ -277,7 +274,7 @@ for i in range(start_,end_):
                 
                 'envType': envType  , 'fbs' : fbs  , 'mbs' : mbs ,  'max_path_length' : max_path_length , 'tasksFile': tasksFile , 'load_policy':load_policy , 'adam_steps': adamSteps, 'dagger': None,
                 'expert_policy_loc': None , 'use_maesn': False , 'expertDataLoc': expertDataLoc,
-                'iterations': 6 }
+                'iterations': 6 , 'comet_logger': comet_logger}
     
     proc = Process(target=experiment, args=(variant,))
     proc.start()
