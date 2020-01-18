@@ -15,7 +15,7 @@ limit_demos_num = None
 test_on_training_goals = True
 
 
-def experiment(variant):
+def experiment(variant, comet_logger=comet_logger):
     
     from sandbox.rocky.tf.algos.maml_il import MAMLIL
     from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
@@ -226,7 +226,7 @@ def experiment(variant):
         latent_dim = ldim,
         dagger = dagger , 
         expert_policy_loc = expert_policy_loc,
-        comet_logger=variant['comet_logger']
+        comet_logger=comet_logger
     )
     
     algo.train()
@@ -274,8 +274,8 @@ for i in range(start_,end_):
                 
                 'envType': envType  , 'fbs' : fbs  , 'mbs' : mbs ,  'max_path_length' : max_path_length , 'tasksFile': tasksFile , 'load_policy':load_policy , 'adam_steps': adamSteps, 'dagger': None,
                 'expert_policy_loc': None , 'use_maesn': False , 'expertDataLoc': expertDataLoc,
-                'iterations': 6 , 'comet_logger': comet_logger}
+                'iterations': 6}
     
-    proc = Process(target=experiment, args=(variant,))
+    proc = Process(target=experiment, args=(variant, comet_logger))
     proc.start()
     proc.join()
