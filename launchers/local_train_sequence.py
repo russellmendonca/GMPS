@@ -1,6 +1,8 @@
 import sys
 sys.path.append("../R_multiworld")
-
+from rllab.misc.comet_logger import CometLogger
+comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
+                            project_name="ml4l3", workspace="glenb")
 expl = False 
 l2loss_std_mult = 0 ; use_corr_term = False
 extra_input =None ; extra_input_dim = 0
@@ -230,9 +232,7 @@ def experiment(variant):
     algo.train()
 
 from multiprocessing import Process
-from rllab.misc.comet_logger import CometLogger
-comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
-                            project_name="ml4l3", workspace="glenb")
+
 
 ########### Example Launcher for Vision Pushing #####################
 user = 'gberseth'
