@@ -231,6 +231,7 @@ def experiment(variant, comet_logger=comet_logger):
     )
     
     algo.train()
+    tf.reset_default_graph()
 
 from multiprocessing import Process
 
@@ -276,7 +277,5 @@ for i in range(start_,end_):
                 'envType': envType  , 'fbs' : fbs  , 'mbs' : mbs ,  'max_path_length' : max_path_length , 'tasksFile': tasksFile , 'load_policy':load_policy , 'adam_steps': adamSteps, 'dagger': None,
                 'expert_policy_loc': None , 'use_maesn': False , 'expertDataLoc': expertDataLoc,
                 'iterations': 6}
-    
-    proc = Process(target=experiment, args=(variant, comet_logger))
-    proc.start()
-    proc.join()
+
+    experiment(variant=variant, comet_logger=comet_logger)
