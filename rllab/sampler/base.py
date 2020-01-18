@@ -252,7 +252,6 @@ class BaseSampler(Sampler):
             )
 
         if comet_logger:
-            comet_logger.increase_step()
             comet_logger.log_metric('StdReturn', np.std(undiscounted_returns))
             comet_logger.log_metric('MaxReturn', np.max(undiscounted_returns))
             comet_logger.log_metric('MinReturn', np.min(undiscounted_returns))
