@@ -1,4 +1,3 @@
-data
 saved_expert_trajs
 *.pyc
 *-checkpoint.ipynb
