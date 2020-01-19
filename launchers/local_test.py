@@ -1,3 +1,7 @@
+import sys
+sys.path.append("../R_multiworld")
+
+import R_multiworld as multiworld
 
 
 from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
