@@ -221,8 +221,7 @@ annotation = 'v2-40tasks';
 tasksFile = 'rad2_quat_v2';
 max_path_length = 200
 policyType = 'fullAda_Bias'
-initFile = '/home/russell/data/s3/Ant-dense-quat-v2-itr400/mri_rosen/policyType_fullAda_Bias/ldim_4/' \
-           + 'adamSteps_500_mbs_40_fbs_50_initFlr_0.5_seed_1/itr_9.pkl'
+initFile = path_to_gmps + '/data/Ant_repl/' + 'debug-40tasks-v2' + 'itr_99.pkl'
 # policyType = 'biasAda_Bias'
 # policyType = 'conv_fcBiasAda'
 
