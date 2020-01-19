@@ -221,7 +221,7 @@ annotation = 'v2-40tasks';
 tasksFile = 'rad2_quat_v2';
 max_path_length = 200
 policyType = 'fullAda_Bias'
-initFile = path_to_gmps + '/data/Ant_repl/' + 'debug-40tasks-v2' + 'itr_99.pkl'
+initFile = path_to_gmps + '/data/Ant_repl/' + 'debug-40tasks-v2/' + 'itr_99.pkl'
 # policyType = 'biasAda_Bias'
 # policyType = 'conv_fcBiasAda'
 
