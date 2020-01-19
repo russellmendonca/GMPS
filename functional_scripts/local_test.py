@@ -2,7 +2,6 @@ import sys
 
 sys.path.append("../R_multiworld")
 
-# import R_multiworld as multiworld
 
 from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
 from rllab.baselines.zero_baseline import ZeroBaseline
@@ -46,6 +45,10 @@ import rllab.misc.logger as logger
 from rllab.misc.ext import  set_seed
 import os
 
+path_to_gmps = '/root/playground/GMPS'
+path_to_multiworld = '/root/playground/R_multiworld'
+OUTPUT_DIR = path_to_gmps + '/data/local/'
+
 
 def setup(seed, n_parallel, log_dir):
     if seed is not None:
@@ -62,6 +65,7 @@ def setup(seed, n_parallel, log_dir):
 
     logger.set_snapshot_dir(log_dir)
     logger.add_tabular_output(log_dir + '/progress.csv')
+
 
 def experiment(variant):
     seed = variant['seed'];
@@ -208,49 +212,59 @@ def experiment(variant):
     algo.train()
 
 
-val = False
+# val = False
 
 ####################### Example Testing script for Pushing ####################################
 # envType = 'Push' ; max_path_length = 50 ; tasksFile = 'push_v4_val'
-path_to_gmps = '/root/playground/GMPS'
-path_to_multiworld = '/root/playground/R_multiworld'
-OUTPUT_DIR = path_to_gmps + '/data/local/'
 
-envType = 'Ant';
-annotation = 'v2-40tasks';
-tasksFile = 'rad2_quat_v2';
-max_path_length = 200
-policyType = 'fullAda_Bias'
-initFile = path_to_gmps + '/data/Ant_repl/' + 'debug-40tasks-v2/' + 'itr_99.pkl'
+
+# envType = 'Ant';
+# annotation = 'v2-40tasks';
+# tasksFile = 'rad2_quat_v2';
+# max_path_length = 200
+# initFile = path_to_gmps + '/data/Ant_repl/' + 'debug-40tasks-v2/' + 'itr_99.pkl'
 # policyType = 'biasAda_Bias'
 # policyType = 'conv_fcBiasAda'
 
-initFlr = 0.5;
-seed = 1
-batch_size = 10000
+# initFlr = 0.5;
+# seed = 1
+# batch_size = 10000
 
 # Provide the meta-trained file which will be used for testing
 
-expPrefix = 'Test/Ant/'
+if __name__ == '__main__':
 
-if 'conv' in policyType:
-    expPrefix = 'img-' + expPrefix
+    expPrefix = 'Test/Ant/'
+    policyType = 'fullAda_Bias'
+    if 'conv' in policyType:
+        expPrefix = 'img-' + expPrefix
 
-# n_itr = 2
-for index in [2]:
+    variant = {'taskIndex': 0,
+               'init_file': path_to_gmps + '/data/Ant_repl/' + 'debug-40tasks-v2/' + 'itr_99.pkl',
+               'n_parallel': 1,
+               'log_dir': '',
+               'seed': 1,
+               'tasksFile': 'rad2_quat_v2',
+               'batch_size': 10000,
+               'policyType': policyType,
+               'n_itr': 0,
+               'default_step': 0.5,
+               'envType': 'Ant',
+               'max_path_length': 200}
 
-    for n_itr in [20]:
-        expPrefix_numItr = expPrefix + '/Task_' + str(index) + '/'
+    for index in [2]:
 
-        # for n_itr in range(1,6):
+        for n_itr in [20]:
+            tf.reset_default_graph()
+            expPrefix_numItr = expPrefix + '/Task_' + str(index) + '/'
 
-        tf.reset_default_graph()
-        expName = expPrefix_numItr + 'Itr_' + str(n_itr)
-        variant = {'taskIndex': index, 'init_file': initFile, 'n_parallel': 1, 'log_dir': OUTPUT_DIR + expName + '/',
-                   'seed': seed, 'tasksFile': tasksFile, 'batch_size': batch_size,
-                   'policyType': policyType, 'n_itr': n_itr, 'default_step': initFlr, 'envType': envType,
-                   'max_path_length': max_path_length}
+            # for n_itr in range(1,6):
 
-        experiment(variant)
+            expName = expPrefix_numItr + 'Itr_' + str(n_itr)
+            variant['taskIndex'] = index
+            variant['n_itr'] = n_itr
+            variant['log_dir'] = OUTPUT_DIR + expName + '/'
+            experiment(variant)
+
 
 
