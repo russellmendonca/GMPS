@@ -188,8 +188,8 @@ val = False
 
 ####################### Example Testing script for Pushing ####################################
 #envType = 'Push' ; max_path_length = 50 ; tasksFile = 'push_v4_val'
-path_to_gmps = '/home/russell/gmps/'
-path_to_multiworld = '/home/russell/multiworld/'
+path_to_gmps = '/root/playground/GMPS'
+path_to_multiworld = '/root/playground/R_multiworld'
 OUTPUT_DIR = path_to_gmps + '/data/local/'
 
 
