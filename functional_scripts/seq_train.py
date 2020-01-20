@@ -1,5 +1,15 @@
+"""
+    File to run sequential training simulation
+    
+    ### Example of how to run
+    GMPS_PATH=/home/gberseth/playground/GMPS MULTIWORLD_PATH=/home/gberseth/playground/multiworld/ python3 functional_scripts/seq_train.py
+"""
+
+
 import sys
-sys.path.append("../R_multiworld")
+import os
+GMPS_PATH = os.environ['GMPS_PATH']
+MULTIWORL_PATH= os.environ['MULTIWORLD_PATH']
 from rllab.misc.comet_logger import CometLogger
 comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
                             project_name="ml4l3", workspace="glenb")
@@ -9,8 +19,8 @@ import tensorflow as tf
 from functional_scripts.remote_train import experiment as train_experiment
 from functional_scripts.local_test import experiment as rl_experiment
 
-user = 'root'
-path_to_gmps = '/' + str(user) + '/playground/GMPS/'
+
+path_to_gmps = GMPS_PATH
 meta_log_dir = path_to_gmps + '/data/seq_test/meta_data/'
 RL_OUTPUT_DIR = path_to_gmps + '/data/seq_test/rl_data/'
 
@@ -60,9 +70,8 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
 
 
 if __name__ == '__main__':
-    user = 'root'
-    path_to_gmps = '/' + str(user) + '/playground/GMPS/'
-    path_to_multiworld = '/' + str(user) + '/playground/R_multiworld/'
+    path_to_gmps = GMPS_PATH
+    path_to_multiworld = MULTIWORL_PATH
     # log_dir = path_to_gmps + '/data/Ant_repl/'
     meta_variant = {'policyType': 'fullAda_Bias',
                'ldim': 4,

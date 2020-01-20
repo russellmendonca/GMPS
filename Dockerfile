@@ -77,7 +77,7 @@ RUN echo "source activate gmps" >> ~/.bashrc
 
 ENV PATH /opt/conda/envs/gmps/bin:$PATH
 
-RUN pip install tensorflow==1.12.0
+RUN pip install tensorflow==1.11.0
 RUN pip install joblib==0.10.3
 RUN pip install cached-property==1.5.1
 RUN pip install mako==1.0.7
@@ -101,6 +101,7 @@ RUN pip install numpy-stl
 RUN pip install tensorboard_logger
 RUN pip install pyOpenGL
 RUN pip install pyquaternion
+RUN pip uninstall pydot
 RUN pip install mujoco-py
 
 RUN python -c 'import mujoco_py'

@@ -1,6 +1,5 @@
 import sys
 
-sys.path.append("../R_multiworld")
 from rllab.misc.comet_logger import CometLogger
 # comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
 #                             project_name="ml4l3", workspace="glenb")
@@ -49,8 +48,11 @@ import rllab.misc.logger as logger
 from rllab.misc.ext import  set_seed
 import os
 
-path_to_gmps = '/root/playground/GMPS'
-path_to_multiworld = '/root/playground/R_multiworld'
+import os
+GMPS_PATH = os.environ['GMPS_PATH']
+MULTIWORL_PATH= os.environ['MULTIWORLD_PATH']
+path_to_gmps = GMPS_PATH
+path_to_multiworld = MULTIWORL_PATH
 OUTPUT_DIR = path_to_gmps + '/data/local/'
 
 

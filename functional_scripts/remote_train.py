@@ -1,6 +1,5 @@
 import sys
 
-sys.path.append("../R_multiworld")
 from rllab.misc.comet_logger import CometLogger
 
 # comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
@@ -251,9 +250,11 @@ def experiment(variant, comet_logger=comet_logger):
 
 
 ########### Example Launcher for Vision Pushing #####################
-user = 'root'
-path_to_gmps = '/' + str(user) + '/playground/GMPS/'
-path_to_multiworld = '/' + str(user) + '/playground/R_multiworld/'
+import os
+GMPS_PATH = os.environ['GMPS_PATH']
+MULTIWORL_PATH= os.environ['MULTIWORLD_PATH']
+path_to_gmps = GMPS_PATH
+path_to_multiworld = MULTIWORL_PATH
 
 # log_dir = '/home/russell/gmps/data/SawyerPush_repl/'
 # envType = 'Push' ; annotation = 'v4-mpl-50-SAC' ; tasksFile = 'sawyer_push/push_v4' ; max_path_length = 50
