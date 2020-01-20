@@ -80,7 +80,7 @@ if __name__ == '__main__':
                'expert_policy_loc': None,
                'use_maesn': False,
                'expertDataLoc': path_to_gmps + '/saved_expert_trajs/ant-quat-v2-10tasks-itr400/',
-               'iterations': 6}
+               'n_itr': 6}
 
     ############# RL SETTING ############
     expPrefix = 'Test/Ant/'
