@@ -28,7 +28,7 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
         load_policy = None
         n_meta_itr = meta_variant['n_itr']
         if (i > start_):
-            load_policy = meta_log_dir + 'debug-' + str(i - 1) + 'tasks-v0/itr_', str(n_meta_itr - 1), '.pkl'
+            load_policy = meta_log_dir + 'debug-' + str(i - 1) + 'tasks-v0/itr_' + str(n_meta_itr - 1) + '.pkl'
 
         meta_variant['log_dir'] = meta_log_dir + annotation
         meta_variant['mbs'] = i
