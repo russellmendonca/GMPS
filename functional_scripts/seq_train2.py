@@ -27,6 +27,7 @@ RL_OUTPUT_DIR = path_to_gmps + '/data/seq_test/rl_data/'
 
 def main(meta_variant, rl_variant, comet_logger=comet_logger):
 
+    from multiprocessing import Process
     start_ = 3
     end_ = 10
     rl_iterations = [2, 4, 6, 8]
