@@ -11,7 +11,6 @@ class CometLogger(Experiment):
         if (previous_experiment_key is not None):
             self = ExistingExperiment(api_key=api_key, previous_experiment=previous_experiment_key)
         else:
-            super(CometLogger, self).__init__(api_key, project_name, workspace,
-                                          auto_output_logging="simple")
+            super(CometLogger, self).__init__(api_key, project_name, workspace)
         self._step = 0
 
