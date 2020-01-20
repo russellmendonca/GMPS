@@ -49,7 +49,7 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
         if i in rl_iterations:
             expPrefix_numItr = expPrefix + '/Task_' + str(i) + '/'
             # for n_itr in range(1,6):
-            n_itr = 10
+            n_itr = 1
             expName = expPrefix_numItr + 'Itr_' + str(n_itr)
             rl_variant['init_file'] = meta_variant['log_dir'] + '/itr_' + str(n_meta_itr - 1) + '.pkl'
             rl_variant['taskIndex'] = i
