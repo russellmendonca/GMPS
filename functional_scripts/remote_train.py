@@ -44,8 +44,14 @@ test_on_training_goals = True
 
 def experiment(variant, comet_exp_key=None):
     if comet_exp_key is not None:
-        from rllab.misc.comet_logger import CometLogger
-        comet_log = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0", previous_experiment_key=comet_exp_key)
+        from rllab.misc.comet_logger import CometContinuedLogger, CometLogger
+        from comet_ml import Experiment, ExistingExperiment
+        # comet_log = CometContinuedLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0", previous_experiment_key=variant['comet_exp_key'])
+        comet_log = ExistingExperiment(api_key="KWwx7zh6I2uw6oQMkpEo3smu0", previous_experiment=variant['comet_exp_key'])
+        # comet_log = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
+        #                     project_name="ml4l3", workspace="glenb")
+        comet_log.set_name("test seq train")
+        # comet_log = comet_exp_key
         print (comet_log)
     else:
         comet_log = None
@@ -95,36 +101,21 @@ def experiment(variant, comet_exp_key=None):
     log_dir = variant['log_dir']
 
     x=0
-    x=x+1; print(x)
     setup(seed, n_parallel, log_dir)
-    x=x+1; print(x)
     fast_batch_size = variant['fbs'];
     meta_batch_size = variant['mbs']
     adam_steps = variant['adam_steps'];
     max_path_length = variant['max_path_length']
-    x=x+1; print(x)
     dagger = variant['dagger'];
-    x=x+1; print(x)
     expert_policy_loc = variant['expert_policy_loc']
-    x=x+1; print(x)
     ldim = variant['ldim'];
-    x=x+1; print(x)
     init_flr = variant['init_flr'];
-    x=x+1; print(x)
     policyType = variant['policyType'];
-    x=x+1; print(x)
     use_maesn = variant['use_maesn']
-    x=x+1; print(x)
     EXPERT_TRAJ_LOCATION = variant['expertDataLoc']
-    x=x+1; print(x)
     envType = variant['envType']
-    x=x+1; print(x)
-    print ("variant['tasksFile']", variant['tasksFile'])
     tasksFile = path_to_multiworld + 'multiworld/envs/goals/' + variant['tasksFile'] + '.pkl'
-    print ("tasksFile", tasksFile)
-    x=x+1; print(x)
     all_tasks = pickle.load(open(tasksFile, 'rb'))
-    x=x+1; print(x)
     assert meta_batch_size <= len(all_tasks), "meta batch size wrong: " + str(meta_batch_size) + " <= " + str(len(all_tasks))
     tasks = all_tasks[:meta_batch_size]
     print("^^^^^^^^^^^^^^^^ meta_tasks: ", tasks, " ^^^^^^^^^^^^^^^^ ")
@@ -267,6 +258,7 @@ def experiment(variant, comet_exp_key=None):
         dagger=dagger,
         expert_policy_loc=expert_policy_loc,
         comet_logger=comet_log,
+        outerIteration=variant['outer_Iteration']
     )
 
     algo.train()

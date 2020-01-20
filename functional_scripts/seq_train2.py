@@ -17,7 +17,7 @@ comet_logger.set_name("test seq train")
 
 print (comet_logger.get_key())
 comet_exp_key = comet_logger.get_key()
-comet_logger.end()
+# comet_logger.end()
 
 # import tensorflow as tf
 from functional_scripts.remote_train import experiment as train_experiment
@@ -49,6 +49,8 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         meta_variant['mbs'] = i
         meta_variant['seed'] = i
         meta_variant['load_policy'] = load_policy
+        meta_variant['comet_exp_key'] = comet_exp_key
+        meta_variant['outer_Iteration'] = i-start_
         ### fbs is the number of epochs to sample
         ### mbs is the number of tasks to sample using range(0,mbs), so they are not sampled from the full set of tasks.
 
@@ -56,10 +58,12 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         #             'ldim_4/adamSteps_500_mbs_40_fbs_50_initFlr_0.5_seed_1/itr_9.pkl'
         # load_policy = '/home/russell/gmps/data/Ant_repl/rep-10tasks-v2/itr_1.pkl'
         # 'imgObs-Sawyer-Push-v4-mpl-50-numDemos5/Itr_250/'
-        # proc = Process(target=train_experiment, args=(meta_variant, comet_logger.get_key()))
-        # proc.start()
-        # proc.join()
-        train_experiment(variant=meta_variant, comet_exp_key=comet_exp_key)
+        if (True):
+            proc = Process(target=train_experiment, args=(meta_variant, comet_exp_key))
+            proc.start()
+            proc.join()
+        else:
+            train_experiment(variant=meta_variant, comet_exp_key=comet_exp_key)
         # tf.reset_default_graph()
 
         ## run rl test if necessary
