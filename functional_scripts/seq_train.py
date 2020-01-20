@@ -11,8 +11,8 @@ from functional_scripts.local_test import experiment as rl_experiment
 
 user = 'root'
 path_to_gmps = '/' + str(user) + '/playground/GMPS/'
-meta_log_dir = path_to_gmps + '/data/seq_test/meta_data'
-RL_OUTPUT_DIR = path_to_gmps + '/data/seq_test/rl_data'
+meta_log_dir = path_to_gmps + '/data/seq_test/meta_data/'
+RL_OUTPUT_DIR = path_to_gmps + '/data/seq_test/rl_data/'
 
 
 def main(meta_variant, rl_variant, comet_logger=comet_logger):
