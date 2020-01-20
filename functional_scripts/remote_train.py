@@ -110,7 +110,7 @@ def experiment(variant, comet_logger=comet_logger):
     all_tasks = pickle.load(open(tasksFile, 'rb'))
     assert meta_batch_size <= len(all_tasks)
     tasks = all_tasks[:meta_batch_size]
-    print(tasks)
+    print("^^^^^^^^^^^^^^^^ meta_tasks: ", tasks, " ^^^^^^^^^^^^^^^^ ")
 
     use_images = 'conv' in policyType
 

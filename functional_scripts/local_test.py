@@ -90,7 +90,7 @@ def experiment(variant, comet_logger=comet_logger):
     max_path_length = variant['max_path_length']
 
     use_images = 'conv' in policyType
-
+    print("$$$$$$$$$$$$$$$ RL-TASK: ", str(tasks[taskIndex]), " $$$$$$$$$$$$$$$")
     if 'MultiDomain' in envType:
         baseEnv = Sawyer_MultiDomainEnv(tasks=tasks, image=use_images, mpl=max_path_length)
 
@@ -268,7 +268,7 @@ if __name__ == '__main__':
             variant['taskIndex'] = index
             variant['n_itr'] = n_itr
             variant['log_dir'] = OUTPUT_DIR + expName + '/'
-            experiment(variant)
+            experiment(variant, comet_logger=comet_logger)
 
 
 

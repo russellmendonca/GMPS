@@ -7,16 +7,21 @@ comet_logger.set_name("test save gmps 50 itr")
 
 import tensorflow as tf
 from functional_scripts.remote_train import experiment as train_experiment
+from functional_scripts.local_test import experiment as rl_experiment
 
-def main(variant, comet_logger=comet_logger):
+user = 'root'
+path_to_gmps = '/' + str(user) + '/playground/GMPS/'
+log_dir = path_to_gmps + '/data/Ant_repl/'
+OUTPUT_DIR = path_to_gmps + '/data/local/'
+
+def main(meta_variant, rl_variant, comet_logger=comet_logger):
 
     start_ = 3
     end_ = 10
+    rl_iterations = [2, 4, 6, 8]
     for i in range(start_, end_):
 
-        user = 'root'
-        path_to_gmps = '/' + str(user) + '/playground/GMPS/'
-        log_dir = path_to_gmps + '/data/Ant_repl/'
+
         annotation = 'debug-' + str(i) + 'tasks-v0'
 
         # policyType = 'conv_fcBiasAda'
@@ -24,9 +29,10 @@ def main(variant, comet_logger=comet_logger):
         if (i > start_):
             load_policy = log_dir + 'debug-' + str(i - 1) + 'tasks-v0/itr_5.pkl'
 
-        variant['lod_dir'] = log_dir + annotation
-        variant['seed'] = i
-        variant['load_policy'] = load_policy
+        meta_variant['lod_dir'] = log_dir + annotation
+        meta_variant['mbs'] = i
+        meta_variant['seed'] = i
+        meta_variant['load_policy'] = load_policy
         ### fbs is the number of epochs to sample
         ### mbs is the number of tasks to sample using range(0,mbs), so they are not sampled from the full set of tasks.
 
@@ -34,8 +40,21 @@ def main(variant, comet_logger=comet_logger):
         #             'ldim_4/adamSteps_500_mbs_40_fbs_50_initFlr_0.5_seed_1/itr_9.pkl'
         # load_policy = '/home/russell/gmps/data/Ant_repl/rep-10tasks-v2/itr_1.pkl'
         # 'imgObs-Sawyer-Push-v4-mpl-50-numDemos5/Itr_250/'
-        train_experiment(variant=variant, comet_logger=comet_logger)
+        train_experiment(variant=meta_variant, comet_logger=comet_logger)
         tf.reset_default_graph()
+
+        ## run rl test if necessary
+        ## we have trained on tasks 0 ~ i-1, now should test rl on task i
+        if i in rl_iterations:
+            expPrefix_numItr = expPrefix + '/Task_' + str(i) + '/'
+            # for n_itr in range(1,6):
+            n_itr = 10
+            expName = expPrefix_numItr + 'Itr_' + str(n_itr)
+            rl_variant['taskIndex'] = i
+            rl_variant['n_itr'] = n_itr
+            rl_variant['log_dir'] = OUTPUT_DIR + expName + '/'
+            rl_experiment(rl_variant, comet_logger=comet_logger)
+            tf.reset_default_graph()
 
 
 if __name__ == '__main__':
@@ -44,7 +63,7 @@ if __name__ == '__main__':
     path_to_multiworld = '/' + str(user) + '/playground/R_multiworld/'
     log_dir = path_to_gmps + '/data/Ant_repl/'
     annotation = ''
-    variant = {'policyType': 'fullAda_Bias',
+    meta_variant = {'policyType': 'fullAda_Bias',
                'ldim': 4,
                'init_flr': 0.5,
                'seed': 0,
@@ -62,3 +81,22 @@ if __name__ == '__main__':
                'use_maesn': False,
                'expertDataLoc': path_to_gmps + '/saved_expert_trajs/ant-quat-v2-10tasks-itr400/',
                'iterations': 6}
+
+    ############# RL SETTING ############
+    expPrefix = 'Test/Ant/'
+    policyType = 'fullAda_Bias'
+    if 'conv' in policyType:
+        expPrefix = 'img-' + expPrefix
+
+    rl_variant = {'taskIndex': None,
+               'init_file': path_to_gmps + '/data/Ant_repl/' + 'debug-40tasks-v2/' + 'itr_99.pkl',
+               'n_parallel': 1,
+               'log_dir': None,
+               'seed': 1,
+               'tasksFile': 'rad2_quat_v2',
+               'batch_size': 10000,
+               'policyType': policyType,
+               'n_itr': None,
+               'default_step': 0.5,
+               'envType': 'Ant',
+               'max_path_length': 200}
