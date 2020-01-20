@@ -3,7 +3,7 @@ sys.path.append("../R_multiworld")
 from rllab.misc.comet_logger import CometLogger
 comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
                             project_name="ml4l3", workspace="glenb")
-comet_logger.set_name("test save gmps 50 itr")
+comet_logger.set_name("test seq train")
 
 import tensorflow as tf
 from functional_scripts.remote_train import experiment as train_experiment
@@ -100,3 +100,5 @@ if __name__ == '__main__':
                'default_step': 0.5,
                'envType': 'Ant',
                'max_path_length': 200}
+
+    main(meta_variant=meta_variant, rl_variant=rl_variant, comet_logger=comet_logger)
