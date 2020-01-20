@@ -56,6 +56,7 @@ class BatchPolopt(RLAlgorithm):
             extra_input=None,
             extra_input_dim=0,
             log_dir = None,
+            comet_logger=None,
             **kwargs
     ):
         """
@@ -79,6 +80,7 @@ class BatchPolopt(RLAlgorithm):
         :param store_paths: Whether to save all paths data to the snapshot.
         :return:
         """
+        self.comet_logger=comet_logger
         self.env = env
         self.policy = policy
         self.load_policy = load_policy
@@ -147,7 +149,7 @@ class BatchPolopt(RLAlgorithm):
         return self.sampler.obtain_samples(itr=itr, reset_args=reset_args, return_dict=False, preupdate=preupdate)
 
     def process_samples(self, itr, paths):
-        return self.sampler.process_samples(itr, paths)
+        return self.sampler.process_samples(itr, paths, comet_logger=self.comet_logger)
 
     def train(self):
 
@@ -227,7 +229,7 @@ class BatchPolopt(RLAlgorithm):
         self.shutdown_worker()
 
     def log_diagnostics(self, paths):
-        self.env.log_diagnostics(paths)
+        self.env.log_diagnostics(paths, comet_logger=self.comet_logger)
         self.policy.log_diagnostics(paths)
         self.baseline.log_diagnostics(paths)
 

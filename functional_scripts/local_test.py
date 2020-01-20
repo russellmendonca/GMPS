@@ -1,7 +1,10 @@
 import sys
 
 sys.path.append("../R_multiworld")
-
+from rllab.misc.comet_logger import CometLogger
+comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
+                            project_name="ml4l3", workspace="glenb")
+comet_logger.set_name("local_test rl")
 
 from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
 from rllab.baselines.zero_baseline import ZeroBaseline
@@ -67,18 +70,18 @@ def setup(seed, n_parallel, log_dir):
     logger.add_tabular_output(log_dir + '/progress.csv')
 
 
-def experiment(variant):
-    seed = variant['seed'];
-    log_dir = variant['log_dir'];
+def experiment(variant, comet_logger=comet_logger):
+    seed = variant['seed']
+    log_dir = variant['log_dir']
     n_parallel = variant['n_parallel']
 
     setup(seed, n_parallel, log_dir)
 
-    init_file = variant['init_file'];
+    init_file = variant['init_file']
     taskIndex = variant['taskIndex']
-    n_itr = variant['n_itr'];
+    n_itr = variant['n_itr']
     default_step = variant['default_step']
-    policyType = variant['policyType'];
+    policyType = variant['policyType']
     envType = variant['envType']
 
     tasksFile = path_to_multiworld + '/multiworld/envs/goals/' + variant['tasksFile'] + '.pkl'
@@ -139,7 +142,8 @@ def experiment(variant):
 
             # reset_arg=np.asscalar(taskIndex),
             reset_arg=taskIndex,
-            log_dir=log_dir
+            log_dir=log_dir,
+            comet_logger=comet_logger
         )
 
     elif policyType == 'biasAda_Bias':

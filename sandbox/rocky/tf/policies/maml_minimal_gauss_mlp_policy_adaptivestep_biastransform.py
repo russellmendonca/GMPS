@@ -468,9 +468,11 @@ class MAMLGaussianMLPPolicy(StochasticPolicy, Serializable):
         param_values = tf.get_default_session().run(params)
         return flatten_tensors(param_values)
 
-    def log_diagnostics(self, paths, prefix=''):
+    def log_diagnostics(self, paths, prefix='', comet_logger=None):
         log_stds = np.vstack([path["agent_infos"]["log_std"] for path in paths])
         logger.record_tabular(prefix+'AveragePolicyStd', np.mean(np.exp(log_stds)))
+        if comet_logger:
+            comet_logger.log_metric('AveragePolicyStd', np.mean(np.exp(log_stds)))
 
     #### code largely not used after here except when resuming/loading a policy. ####
     def get_reparam_action_sym(self, obs_var, action_var, old_dist_info_vars):
