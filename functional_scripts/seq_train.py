@@ -22,7 +22,7 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
     rl_iterations = [2, 4, 6, 8]
     for i in range(start_, end_):
 
-        annotation = 'debug-' + str(i) + 'tasks-v0'
+        annotation = 'debug-' + str(i) + 'tasks-v0/'
 
         # policyType = 'conv_fcBiasAda'
         load_policy = None
@@ -51,7 +51,7 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
             # for n_itr in range(1,6):
             n_itr = 10
             expName = expPrefix_numItr + 'Itr_' + str(n_itr)
-            rl_variant['initFile'] = meta_variant['log_dir']
+            rl_variant['init_file'] = meta_variant['log_dir'] + 'tasks-v0/itr_' + str(n_meta_itr - 1) + '.pkl'
             rl_variant['taskIndex'] = i
             rl_variant['n_itr'] = n_itr
             rl_variant['log_dir'] = RL_OUTPUT_DIR + expName + '/'
