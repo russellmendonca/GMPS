@@ -54,7 +54,7 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
             rl_variant['init_file'] = meta_variant['log_dir'] + '/itr_' + str(n_meta_itr - 1) + '.pkl'
             rl_variant['taskIndex'] = i
             rl_variant['n_itr'] = n_itr
-            rl_variant['log_dir'] = RL_OUTPUT_DIR + expName
+            rl_variant['log_dir'] = RL_OUTPUT_DIR + expName + '/'
             rl_experiment(rl_variant, comet_logger=comet_logger)
             tf.reset_default_graph()
 
