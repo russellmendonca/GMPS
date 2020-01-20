@@ -15,7 +15,7 @@ comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
                             project_name="ml4l3", workspace="glenb")
 comet_logger.set_name("test seq train")
 
-import tensorflow as tf
+# import tensorflow as tf
 from functional_scripts.remote_train import experiment as train_experiment
 from functional_scripts.local_test import experiment as rl_experiment
 
@@ -52,12 +52,15 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
         #             'ldim_4/adamSteps_500_mbs_40_fbs_50_initFlr_0.5_seed_1/itr_9.pkl'
         # load_policy = '/home/russell/gmps/data/Ant_repl/rep-10tasks-v2/itr_1.pkl'
         # 'imgObs-Sawyer-Push-v4-mpl-50-numDemos5/Itr_250/'
-        train_experiment(variant=meta_variant, comet_logger=comet_logger)
-        tf.reset_default_graph()
+        proc = Process(target=train_experiment, args=(meta_variant, comet_logger))
+        proc.start()
+        proc.join()
+        # train_experiment(variant=meta_variant, comet_logger=comet_logger)
+        # tf.reset_default_graph()
 
         ## run rl test if necessary
         ## we have trained on tasks 0 ~ i-1, now should test rl on task i
-        if i in rl_iterations:
+        if i in rl_iterations: ### Glen TODO I am not sure why this is done only spcific iterations.
             expPrefix_numItr = expPrefix + '/Task_' + str(i) + '/'
             # for n_itr in range(1,6):
             n_itr = 1
@@ -67,7 +70,10 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
             rl_variant['n_itr'] = n_itr
             rl_variant['log_dir'] = RL_OUTPUT_DIR + expName + '/'
             rl_experiment(rl_variant, comet_logger=comet_logger)
-            tf.reset_default_graph()
+            proc = Process(target=rl_experiment, args=(rl_variant, comet_logger))
+            proc.start()
+            proc.join()
+            # tf.reset_default_graph()
 
 
 if __name__ == '__main__':
@@ -79,7 +85,7 @@ if __name__ == '__main__':
                'init_flr': 0.5,
                'seed': None,
                'log_dir': None,
-               'n_parallel': 1,
+               'n_parallel': 4,
                'envType': 'Ant',
                'fbs': 10,
                'mbs': None,
@@ -101,7 +107,7 @@ if __name__ == '__main__':
 
     rl_variant = {'taskIndex': None,
                'init_file': None,
-               'n_parallel': 1,
+               'n_parallel': 4,
                'log_dir': None,
                'seed': 1,
                'tasksFile': 'rad2_quat_v2',
