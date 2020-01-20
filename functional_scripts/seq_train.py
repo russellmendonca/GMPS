@@ -11,8 +11,9 @@ from functional_scripts.local_test import experiment as rl_experiment
 
 user = 'root'
 path_to_gmps = '/' + str(user) + '/playground/GMPS/'
-log_dir = path_to_gmps + '/data/Ant_repl/'
-OUTPUT_DIR = path_to_gmps + '/data/local/'
+meta_log_dir = path_to_gmps + '/data/seq_test/meta_data'
+RL_OUTPUT_DIR = path_to_gmps + '/data/seq_test/rl_data'
+
 
 def main(meta_variant, rl_variant, comet_logger=comet_logger):
 
@@ -21,15 +22,15 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
     rl_iterations = [2, 4, 6, 8]
     for i in range(start_, end_):
 
-
         annotation = 'debug-' + str(i) + 'tasks-v0'
 
         # policyType = 'conv_fcBiasAda'
         load_policy = None
+        n_meta_itr = meta_variant['n_itr']
         if (i > start_):
-            load_policy = log_dir + 'debug-' + str(i - 1) + 'tasks-v0/itr_5.pkl'
+            load_policy = meta_log_dir + 'debug-' + str(i - 1) + 'tasks-v0/itr_', str(n_meta_itr - 1), '.pkl'
 
-        meta_variant['lod_dir'] = log_dir + annotation
+        meta_variant['log_dir'] = meta_log_dir + annotation
         meta_variant['mbs'] = i
         meta_variant['seed'] = i
         meta_variant['load_policy'] = load_policy
@@ -50,9 +51,10 @@ def main(meta_variant, rl_variant, comet_logger=comet_logger):
             # for n_itr in range(1,6):
             n_itr = 10
             expName = expPrefix_numItr + 'Itr_' + str(n_itr)
+            rl_variant['initFile'] = meta_variant['log_dir']
             rl_variant['taskIndex'] = i
             rl_variant['n_itr'] = n_itr
-            rl_variant['log_dir'] = OUTPUT_DIR + expName + '/'
+            rl_variant['log_dir'] = RL_OUTPUT_DIR + expName + '/'
             rl_experiment(rl_variant, comet_logger=comet_logger)
             tf.reset_default_graph()
 
@@ -61,17 +63,16 @@ if __name__ == '__main__':
     user = 'root'
     path_to_gmps = '/' + str(user) + '/playground/GMPS/'
     path_to_multiworld = '/' + str(user) + '/playground/R_multiworld/'
-    log_dir = path_to_gmps + '/data/Ant_repl/'
-    annotation = ''
+    # log_dir = path_to_gmps + '/data/Ant_repl/'
     meta_variant = {'policyType': 'fullAda_Bias',
                'ldim': 4,
                'init_flr': 0.5,
-               'seed': 0,
-               'log_dir': log_dir + annotation,
+               'seed': None,
+               'log_dir': None,
                'n_parallel': 1,
                'envType': 'Ant',
                'fbs': 10,
-               'mbs': 1,
+               'mbs': None,
                'max_path_length': 200,
                'tasksFile': 'rad2_quat_v2',
                'load_policy': None,
@@ -89,7 +90,7 @@ if __name__ == '__main__':
         expPrefix = 'img-' + expPrefix
 
     rl_variant = {'taskIndex': None,
-               'init_file': path_to_gmps + '/data/Ant_repl/' + 'debug-40tasks-v2/' + 'itr_99.pkl',
+               'init_file': None,
                'n_parallel': 1,
                'log_dir': None,
                'seed': 1,
