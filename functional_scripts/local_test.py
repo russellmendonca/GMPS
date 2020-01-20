@@ -72,6 +72,7 @@ def setup(seed, n_parallel, log_dir):
 
 
 def experiment(variant, comet_logger=comet_logger):
+    print("%%%%%%%%%%%%%%%%%", comet_logger)
     seed = variant['seed']
     log_dir = variant['log_dir']
     n_parallel = variant['n_parallel']
