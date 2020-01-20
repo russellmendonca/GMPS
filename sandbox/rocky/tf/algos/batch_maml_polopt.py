@@ -251,7 +251,7 @@ class BatchMAMLPolopt(RLAlgorithm):
             
             for itr in range(self.start_itr, self.n_itr):
                 if self.comet_logger:
-                    self.comet_logger.increase_step()
+                    self.comet_logger.set_step(itr) ### Later we should add something to this
                 itr_start_time = time.time()
                 np.random.seed(self.seed+itr)
                 tf.set_random_seed(self.seed+itr)
