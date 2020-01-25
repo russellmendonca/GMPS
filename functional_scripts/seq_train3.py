@@ -65,7 +65,11 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         rl_variant['init_file'] = meta_variant['log_dir'] + '/params.pkl'
         rl_variant['taskIndex'] = i
         rl_variant['n_itr'] = n_itr
-        rl_variant['log_dir'] = EXPERT_DATA_LOC
+        if i >= 4:
+            print('CHANGINGGGGGGGGGGGG BACK TO REAL EXPERT DATA LOC')
+            rl_variant['log_dir'] = EXPERT_DATA_LOC
+        else:
+            rl_variant['log_dir'] = EXPERT_DATA_LOC + '/tempholder/'
         rl_variant['outer_iteration'] = outer_iteration
         rl_variant['comet_exp_key'] = comet_exp_key
         outer_iteration +=  rl_variant['n_itr']
@@ -122,8 +126,8 @@ if __name__ == '__main__':
                     'dagger': None,
                     'expert_policy_loc': None,
                     'use_maesn': False,
-                    # 'expertDataLoc': EXPERT_DATA_LOC,
-                    'expertDataLoc': path_to_gmps + '/saved_expert_trajs/ant-quat-v2-10tasks-itr400/',
+                    'expertDataLoc': EXPERT_DATA_LOC,
+                    # 'expertDataLoc': path_to_gmps + '/saved_expert_trajs/ant-quat-v2-10tasks-itr400/',
                     'n_itr': 1}
 
     ############# RL SETTING ############
