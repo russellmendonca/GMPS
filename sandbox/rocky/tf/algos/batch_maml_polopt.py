@@ -204,8 +204,9 @@ class BatchMAMLPolopt(RLAlgorithm):
         return paths
 
     def load_expert_traces(self):
-       
+        print("LOAD FROMMM UPPP TOO: ", self.expert_trajs_dir+str(self.num_tasks - 1)+".pkl")
         self.expert_traces = {taskidx : joblib.load(self.expert_trajs_dir+str(taskidx)+".pkl") for taskidx in range(self.num_tasks)}
+        print(" NNNUUUMMMM EXPPPP: ", len(self.expert_traces))
         for taskidx in range(self.num_tasks):
             for path in self.expert_traces[taskidx]:
                 if 'expert_actions' not in path.keys() :
