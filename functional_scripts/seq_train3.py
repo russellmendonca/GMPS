@@ -65,11 +65,12 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         rl_variant['init_file'] = meta_variant['log_dir'] + '/params.pkl'
         rl_variant['taskIndex'] = i
         rl_variant['n_itr'] = n_itr
-        if i >= 4:
-            print('CHANGINGGGGGGGGGGGG BACK TO REAL EXPERT DATA LOC')
-            rl_variant['log_dir'] = EXPERT_DATA_LOC
-        else:
-            rl_variant['log_dir'] = EXPERT_DATA_LOC + '/tempholder/'
+        # if i >= 4:
+        #     print('CHANGINGGGGGGGGGGGG BACK TO REAL EXPERT DATA LOC')
+        #     rl_variant['log_dir'] = EXPERT_DATA_LOC
+        # else:
+        #     rl_variant['log_dir'] = EXPERT_DATA_LOC + '/tempholder/'
+        rl_variant['log_dir'] = EXPERT_DATA_LOC
         rl_variant['outer_iteration'] = outer_iteration
         rl_variant['comet_exp_key'] = comet_exp_key
         outer_iteration +=  rl_variant['n_itr']
@@ -81,8 +82,10 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         else:
             train_experiment(variant=meta_variant, comet_exp_key=comet_exp_key)
             tf.reset_default_graph()
+            tf.get_variable_scope().reuse_variables()
             rl_experiment(variant=rl_variant, comet_exp_key=comet_exp_key)
             tf.reset_default_graph()
+            tf.get_variable_scope().reuse_variables()
 
         # tf.reset_default_graph()
 
