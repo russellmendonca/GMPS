@@ -34,7 +34,8 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
     from multiprocessing import Process
     start_ = 3
     end_ = 10
-    rl_iterations = [2, 4, 6, 8]
+    # rl_iterations = [2, 4, 6, 8]
+    outer_iteration = 0
     for i in range(start_, end_):
 
         annotation = 'debug-' + str(i) + 'tasks-v0/'
