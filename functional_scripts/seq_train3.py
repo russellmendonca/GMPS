@@ -70,7 +70,7 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         rl_variant['comet_exp_key'] = comet_exp_key
         # outer_iteration +=  rl_variant['n_itr']
 
-        if (True):
+        if (False):
             proc = Process(target=train_experiment, args=(meta_variant, comet_exp_key))
             proc.start()
             proc.join()
