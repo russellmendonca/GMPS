@@ -76,6 +76,7 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
             proc.join()
         else:
             train_experiment(variant=meta_variant, comet_exp_key=comet_exp_key)
+            tf.reset_default_graph()
         # tf.reset_default_graph()
 
         ## run rl test if necessary
