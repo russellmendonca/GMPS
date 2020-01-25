@@ -57,7 +57,7 @@ class BatchPolopt(RLAlgorithm):
             extra_input_dim=0,
             log_dir = None,
             comet_logger=None,
-            outer_iteration=0
+            outer_iteration=0,
             **kwargs
     ):
         """
