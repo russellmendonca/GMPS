@@ -10,6 +10,7 @@ from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
 from rllab.baselines.zero_baseline import ZeroBaseline
 from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import stub, run_experiment_lite
+from comet_ml import Experiment, ExistingExperiment
 
 from sandbox.rocky.tf.algos.vpg import VPG as vpg_basic
 from sandbox.rocky.tf.algos.vpg_biasADA import VPG as vpg_biasADA
@@ -74,7 +75,18 @@ def setup(seed, n_parallel, log_dir):
     logger.add_tabular_output(log_dir + '/progress.csv')
 
 
-def experiment(variant, comet_logger=comet_logger):
+def experiment(variant, comet_exp_key=None):
+    if comet_exp_key is not None:
+        # from rllab.misc.comet_logger import CometContinuedLogger, CometLogger
+        # from comet_ml import Experiment, ExistingExperiment
+        # comet_log = CometContinuedLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0", previous_experiment_key=variant['comet_exp_key'])
+        comet_log = ExistingExperiment(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
+                                       previous_experiment=variant['comet_exp_key'])
+        # comet_log = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
+        #                     project_name="ml4l3", workspace="glenb")
+        comet_log.set_name("test seq train")
+        # comet_log = comet_exp_key
+        print("RL!: ", comet_log)
     print("%%%%%%%%%%%%%%%%%", comet_logger)
     seed = variant['seed']
     log_dir = variant['log_dir']

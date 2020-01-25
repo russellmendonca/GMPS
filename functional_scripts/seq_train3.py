@@ -68,7 +68,7 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         rl_variant['log_dir'] = EXPERT_DATA_LOC
         rl_variant['outer_iteration'] = outer_iteration
         rl_variant['comet_exp_key'] = comet_exp_key
-        # outer_iteration +=  rl_variant['n_itr']
+        outer_iteration +=  rl_variant['n_itr']
 
         if (False):
             proc = Process(target=train_experiment, args=(meta_variant, comet_exp_key))
@@ -77,6 +77,7 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         else:
             train_experiment(variant=meta_variant, comet_exp_key=comet_exp_key)
             tf.reset_default_graph()
+            rl_experiment(variant=rl_variant, comet_exp_key=comet_exp_key)
         # tf.reset_default_graph()
 
         ## run rl test if necessary
