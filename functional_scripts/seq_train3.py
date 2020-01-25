@@ -51,7 +51,7 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         meta_variant['seed'] = i
         meta_variant['load_policy'] = load_policy
         meta_variant['comet_exp_key'] = comet_exp_key
-        meta_variant['outer_Iteration'] = outer_iteration
+        meta_variant['outer_iteration'] = outer_iteration
         outer_iteration += meta_variant['n_itr']
         ### fbs is the number of epochs to sample
         ### mbs is the number of tasks to sample using range(0,mbs), so they are not sampled from the full set of tasks.
@@ -66,7 +66,7 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         rl_variant['taskIndex'] = i
         rl_variant['n_itr'] = n_itr
         rl_variant['log_dir'] = EXPERT_DATA_LOC
-        rl_variant['outer_Iteration'] = outer_iteration
+        rl_variant['outer_iteration'] = outer_iteration
         rl_variant['comet_exp_key'] = comet_exp_key
         # outer_iteration +=  rl_variant['n_itr']
 
