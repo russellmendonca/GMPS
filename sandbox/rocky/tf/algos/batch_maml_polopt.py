@@ -78,7 +78,7 @@ class BatchMAMLPolopt(RLAlgorithm):
             seed=1,
             debug_pusher=False,
             comet_logger=None,
-            outerIteration=0,
+            outer_iteration=0,
             **kwargs
     ):
         """
@@ -104,7 +104,7 @@ class BatchMAMLPolopt(RLAlgorithm):
         :param store_paths: Whether to save all paths data to the snapshot.
         :return:
         """
-        self.outerIteration=outerIteration
+        self.outer_iteration=outer_iteration
         self.comet_logger = comet_logger
         self.seed=seed
         self.env = env
@@ -253,7 +253,8 @@ class BatchMAMLPolopt(RLAlgorithm):
             
             for itr in range(self.start_itr, self.n_itr):
                 if self.comet_logger:
-                    self.comet_logger.set_step(itr+(self.outerIteration*self.n_itr)) ### Later we should add something to this
+                    # self.comet_logger.set_step(itr + (self.outer_iteration * self.n_itr)) ### Later we should add something to this
+                    self.comet_logger.set_step(itr + self.outer_iteration)
                 itr_start_time = time.time()
                 np.random.seed(self.seed+itr)
                 tf.set_random_seed(self.seed+itr)

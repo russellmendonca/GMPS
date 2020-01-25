@@ -218,18 +218,24 @@ def pop_prefix():
     _prefix_str = ''.join(_prefixes)
 
 
-def save_itr_params(itr, params):
+def save_itr_params(itr, params, file_name=None):
     if _snapshot_dir:
         if _snapshot_mode == 'all':
-            file_name = osp.join(_snapshot_dir, 'itr_%d.pkl' % itr)
+            if not file_name:
+                file_name = 'itr_%d.pkl' % itr
+            file_name = osp.join(_snapshot_dir, file_name)
             joblib.dump(params, file_name, compress=3)
         elif _snapshot_mode == 'last':
             # override previous params
-            file_name = osp.join(_snapshot_dir, 'params.pkl')
+            if not file_name:
+                file_name = 'params.pkl'
+            file_name = osp.join(_snapshot_dir, file_name)
             joblib.dump(params, file_name, compress=3)
         elif _snapshot_mode == "gap":
             if itr % _snapshot_gap == 0:
-                file_name = osp.join(_snapshot_dir, 'itr_%d.pkl' % itr)
+                if not file_name:
+                    file_name = 'itr_%d.pkl' % itr
+                file_name = osp.join(_snapshot_dir, file_name)
                 joblib.dump(params, file_name, compress=3)
         elif _snapshot_mode == 'none':
             pass

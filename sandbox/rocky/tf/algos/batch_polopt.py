@@ -57,6 +57,7 @@ class BatchPolopt(RLAlgorithm):
             extra_input_dim=0,
             log_dir = None,
             comet_logger=None,
+            outer_iteration=0
             **kwargs
     ):
         """
@@ -80,6 +81,7 @@ class BatchPolopt(RLAlgorithm):
         :param store_paths: Whether to save all paths data to the snapshot.
         :return:
         """
+        self.outer_iteration = outer_iteration
         self.comet_logger=comet_logger
         self.env = env
         self.policy = policy
@@ -174,7 +176,7 @@ class BatchPolopt(RLAlgorithm):
             start_time = time.time()
             for itr in range(self.start_itr, self.n_itr):
                 if self.comet_logger:
-                    self.comet_logger.increase_step()
+                    self.comet_logger.set_step(itr + self.outer_iteration)
                 if itr == self.n_itr-1:
                     self.policy.std_modifier = 0.00001
                     #self.policy.std_modifier = 1

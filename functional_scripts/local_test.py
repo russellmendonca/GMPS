@@ -69,6 +69,7 @@ def setup(seed, n_parallel, log_dir):
     if os.path.isdir(log_dir) == False:
         os.makedirs(log_dir, exist_ok=True)
 
+    logger._snapshot_mode = 'last'
     logger.set_snapshot_dir(log_dir)
     logger.add_tabular_output(log_dir + '/progress.csv')
 
@@ -147,7 +148,8 @@ def experiment(variant, comet_logger=comet_logger):
             # reset_arg=np.asscalar(taskIndex),
             reset_arg=taskIndex,
             log_dir=log_dir,
-            comet_logger=comet_logger
+            comet_logger=comet_logger,
+            outer_iteration=variant['outer_iteration']
         )
 
     elif policyType == 'biasAda_Bias':
