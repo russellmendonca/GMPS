@@ -20,7 +20,7 @@ print(comet_logger.get_key())
 comet_exp_key = comet_logger.get_key()
 # comet_logger.end()
 
-# import tensorflow as tf
+import tensorflow as tf
 from functional_scripts.remote_train import experiment as train_experiment
 from functional_scripts.local_test import experiment as rl_experiment
 
