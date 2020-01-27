@@ -1,8 +1,18 @@
-import sys
-from rllab.misc.comet_logger import CometLogger
-comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
-                            project_name="ml4l3", workspace="glenb")
-comet_logger.set_name("test seq train")
+import os
+import joblib
+GMPS_PATH = os.environ['GMPS_PATH']
+path_to_gmps = GMPS_PATH
+test_dir = path_to_gmps + '/seq_test/'
+meta_log_dir = test_dir + '/meta_data/'
+EXPERT_DATA_LOC = test_dir + '/seq_expert_traj/'
 
-from functional_scripts.local_test import experiment as rl_experiment
+exploc2 = path_to_gmps + '/saved_expert_trajs/ant-quat-v2-10tasks-itr400/'
 
+expert_traces = {taskidx : joblib.load(EXPERT_DATA_LOC+str(taskidx)+".pkl") for taskidx in range(3)}
+for taskidx in range(3):
+    print(expert_traces[taskidx])
+
+expert_traces2 = {taskidx : joblib.load(EXPERT_DATA_LOC+str(taskidx)+".pkl") for taskidx in range(3)}
+
+for taskidx in range(3):
+    print(expert_traces2[taskidx])
