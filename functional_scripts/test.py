@@ -7,12 +7,17 @@ meta_log_dir = test_dir + '/meta_data/'
 EXPERT_DATA_LOC = test_dir + '/seq_expert_traj/'
 
 exploc2 = path_to_gmps + '/saved_expert_trajs/ant-quat-v2-10tasks-itr400/'
-
+comp1 = path_to_gmps + "/russel.txt"
+comp2 = path_to_gmps + "/zzw.txt"
 expert_traces = {taskidx : joblib.load(EXPERT_DATA_LOC+str(taskidx)+".pkl") for taskidx in range(3)}
 # for taskidx in range(4):
 #     print(expert_traces[taskidx])
-print(expert_traces[0])
-print(expert_traces[1])
+file1 = open(comp1, 'wb')
+file2 = open(comp2, 'wb')
+file1.write(expert_traces[0])
+file2.write(expert_traces[3])
+file1.close()
+file2.close()
 
 # expert_traces2 = {taskidx : joblib.load(EXPERT_DATA_LOC+str(taskidx)+".pkl") for taskidx in range(3)}
 #
