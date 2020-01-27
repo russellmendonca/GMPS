@@ -22,6 +22,9 @@ comp2 = path_to_gmps + "/zzw.txt"
 #     file2.close()
 #
 # sess.close()
-
-expert_traces = {taskidx : joblib.load(EXPERT_DATA_LOC+str(taskidx)+".pkl") for taskidx in range(4)}
-print(expert_traces[0])
+expert_traces = {}
+for taskidx in range(4):
+    expert_traces[taskidx] = joblib.load(EXPERT_DATA_LOC+str(taskidx)+".pkl")
+    print("LOADED ", taskidx)
+# expert_traces = {taskidx : joblib.load(EXPERT_DATA_LOC+str(taskidx)+".pkl") for taskidx in range(4)}
+# print(expert_traces[0])
