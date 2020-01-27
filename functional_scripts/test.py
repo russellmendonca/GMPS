@@ -12,10 +12,10 @@ comp2 = path_to_gmps + "/zzw.txt"
 expert_traces = {taskidx : joblib.load(EXPERT_DATA_LOC+str(taskidx)+".pkl") for taskidx in range(3)}
 # for taskidx in range(4):
 #     print(expert_traces[taskidx])
-file1 = open(comp1, 'wb')
-file2 = open(comp2, 'wb')
-file1.write(expert_traces[0])
-file2.write(expert_traces[3])
+file1 = open(comp1, 'w')
+file2 = open(comp2, 'w')
+file1.write(str(expert_traces[0]))
+file2.write(str(expert_traces[3]))
 file1.close()
 file2.close()
 
