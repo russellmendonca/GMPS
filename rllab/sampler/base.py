@@ -251,7 +251,7 @@ class BaseSampler(Sampler):
                 paths=paths,
             )
 
-        if comet_logger:
+        if log and comet_logger:
             comet_logger.log_metric('StdReturn', np.std(undiscounted_returns))
             comet_logger.log_metric('MaxReturn', np.max(undiscounted_returns))
             comet_logger.log_metric('MinReturn', np.min(undiscounted_returns))
