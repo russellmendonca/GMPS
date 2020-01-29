@@ -32,3 +32,8 @@ comp2 = path_to_gmps + "/zzw.txt"
 param = joblib.load(EXPERT_DATA_LOC + "0.pkl")
 file1 = open(comp1, 'w')
 file1.write(str(param))
+
+with tf.Session().as_default():
+    param = joblib.load(EXPERT_DATA_LOC + "3.pkl")
+    file2 = open(comp2, 'w')
+    file2.write(str(param))
