@@ -218,6 +218,7 @@ class BatchPolopt(RLAlgorithm):
                         params["paths"] = samples_data["paths"]
 
                     logger.save_itr_params(itr, params, file_name=str(self.reset_arg)+'.pkl')
+                    print(params['paths'])
                     logger.log("Saved")
                     logger.log("Optimizing policy...")
                     self.optimize_policy(itr, samples_data)
