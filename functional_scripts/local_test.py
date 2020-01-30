@@ -80,17 +80,18 @@ def experiment(variant, comet_exp_key=None):
         # from rllab.misc.comet_logger import CometContinuedLogger, CometLogger
         # from comet_ml import Experiment, ExistingExperiment
         # comet_log = CometContinuedLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0", previous_experiment_key=variant['comet_exp_key'])
-        comet_log = ExistingExperiment(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
+        comet_logger = ExistingExperiment(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
                                        previous_experiment=variant['comet_exp_key'])
         # comet_log = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
         #                     project_name="ml4l3", workspace="glenb")
-        comet_log.set_name("test seq train")
+        comet_logger.set_name("test seq train")
         # comet_log = comet_exp_key
-        print("RL!: ", comet_log)
+        print("RL!: ", comet_logger)
     print("%%%%%%%%%%%%%%%%%", comet_logger)
     seed = variant['seed']
     log_dir = variant['log_dir']
     n_parallel = variant['n_parallel']
+
 
     setup(seed, n_parallel, log_dir)
 
