@@ -129,8 +129,8 @@ if __name__ == '__main__':
                     'dagger': None,
                     'expert_policy_loc': None,
                     'use_maesn': False,
-                    # 'expertDataLoc': EXPERT_DATA_LOC,
-                    'expertDataLoc': path_to_gmps + '/saved_expert_trajs/ant-quat-v2-10tasks-itr400/',
+                    'expertDataLoc': EXPERT_DATA_LOC,
+                    # 'expertDataLoc': path_to_gmps + '/saved_expert_trajs/ant-quat-v2-10tasks-itr400/',
                     'n_itr': 3}
 
     ############# RL SETTING ############

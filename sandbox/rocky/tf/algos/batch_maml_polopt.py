@@ -209,7 +209,7 @@ class BatchMAMLPolopt(RLAlgorithm):
         print(" NNNUUUMMMM EXPPPP: ", len(self.expert_traces))
         for taskidx in range(self.num_tasks):
             for path in self.expert_traces[taskidx]:
-                if 'expert_actions' not in path.keys() :
+                if 'expert_actions' not in path.keys() or (not path['expert_actions'][0][0]):
                     path['expert_actions'] = np.clip(deepcopy(path['actions']), -1.0, 1.0)
 
                 path['agent_infos'] = dict(mean=[[0.0] * len(path['actions'][0])]*len(path['actions']),log_std=[[0.0] * len(path['actions'][0])]*len(path['actions']))
