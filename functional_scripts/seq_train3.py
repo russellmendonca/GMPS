@@ -33,7 +33,7 @@ EXPERT_DATA_LOC = test_dir + '/seq_expert_traj/'
 def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
     from multiprocessing import Process
     comet_exp_key = comet_logger.get_key()
-    start_ = 3
+    start_ = 9
     end_ = 10
     # rl_iterations = [2, 4, 6, 8]
     outer_iteration = 0
