@@ -10,14 +10,14 @@ import os
 
 GMPS_PATH = os.environ['GMPS_PATH']
 MULTIWORL_PATH = os.environ['MULTIWORLD_PATH']
-from rllab.misc.comet_logger import CometLogger
+from comet_ml import Experiment
 
-comet_logger = CometLogger(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
+comet_logger = Experiment(api_key="KWwx7zh6I2uw6oQMkpEo3smu0",
                            project_name="ml4l3", workspace="glenb")
-comet_logger.set_name("test seq train")
+comet_logger.set_name("test seq train with vpg")
 
 print(comet_logger.get_key())
-comet_exp_key = comet_logger.get_key()
+
 # comet_logger.end()
 
 import tensorflow as tf
@@ -32,6 +32,7 @@ EXPERT_DATA_LOC = test_dir + '/seq_expert_traj/'
 
 def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
     from multiprocessing import Process
+    comet_exp_key = comet_logger.get_key()
     start_ = 3
     end_ = 10
     # rl_iterations = [2, 4, 6, 8]
@@ -61,7 +62,7 @@ def train_seq(meta_variant, rl_variant, comet_logger=comet_logger):
         # load_policy = '/home/russell/gmps/data/Ant_repl/rep-10tasks-v2/itr_1.pkl'
         # 'imgObs-Sawyer-Push-v4-mpl-50-numDemos5/Itr_250/'
 
-        n_itr = 2
+        n_itr = 20
         rl_variant['init_file'] = meta_variant['log_dir'] + '/params.pkl'
         rl_variant['taskIndex'] = i
         rl_variant['n_itr'] = n_itr
@@ -131,7 +132,7 @@ if __name__ == '__main__':
                     'use_maesn': False,
                     'expertDataLoc': EXPERT_DATA_LOC,
                     # 'expertDataLoc': path_to_gmps + '/saved_expert_trajs/ant-quat-v2-10tasks-itr400/',
-                    'n_itr': 3}
+                    'n_itr': 20}
 
     ############# RL SETTING ############
     expPrefix = 'Test/Ant/'

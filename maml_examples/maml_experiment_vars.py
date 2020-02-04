@@ -15,7 +15,8 @@ OUTPUT_NONLINEARITY = {
     'reluh':tf.nn.tanh,
 }
 
-TESTING_ITRS = [2*x for x in range(10000)] #+ [100*x-1 for x in range(1000)]
+# TESTING_ITRS = [2*x for x in range(10000)] #+ [100*x-1 for x in range(1000)]
+TESTING_ITRS = []
 # TESTING_ITRS = [2*x for x in range(1000)]
 # TESTING_ITRS = [0,2,3,5,7,9,11,13,15,17,19] + [2*x+1 for x in range(1000)]
 # BASELINE_TRAINING_ITRS = [0,]
